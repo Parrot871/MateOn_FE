@@ -1,5 +1,7 @@
 // src/app/(auth)/login.tsx
+import { loginWithKakao } from '@/api/auth';
 import {KakaoLogo, ID, PW, MateOnLogo} from '@/assets/images/login';
+import { login as kakaoLogin } from '@react-native-seoul/kakao-login';
 import { Image } from 'expo-image';
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -10,6 +12,16 @@ export default function LoginScreen() {
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
 
+  const handleKakaoLogin = async () => {
+    try {
+      const { accessToken } = await kakaoLogin();
+      await loginWithKakao(accessToken);
+      router.replace('/');
+    } catch (error) {
+      console.error('카카오 로그인 실패:', error);
+    }
+  };
+
   return (
     <View className="flex-1 justify-center px-10 bg-[#8BA9FF]">
       
@@ -19,9 +31,9 @@ export default function LoginScreen() {
         <Text className="text-white text-lg font-pretendard mt-2">함께할 최고의 팀원을 만나보세요</Text>
       </View>
 
-      <TouchableOpacity className="h-14 rounded-xl bg-[#FAE100] flex-row justify-center items-center">
+      <TouchableOpacity onPress={handleKakaoLogin} className="h-14 rounded-xl bg-[#FAE100] flex-row justify-center items-center">
         <Image source={KakaoLogo} style={{ width: 20, height: 20 }} contentFit="contain" />
-        <Text className="text-black font-pretendard-semibold ml-2">카카오 계정으로 로그인</Text>
+        <Text className="text-black font-pretendard-semibold ml-2">카카오톡으로 로그인</Text>
       </TouchableOpacity>
 
       <View className="flex-row items-center my-8">
@@ -36,6 +48,7 @@ export default function LoginScreen() {
           value={id}
           onChangeText={setId}
           placeholder="이메일을 입력해주세요"
+          placeholderTextColor="#9CA3AF"
           autoCapitalize="none"
           autoCorrect={false}
           className="flex-1 h-full ml-3 font-pretendard"
@@ -48,6 +61,7 @@ export default function LoginScreen() {
           value={password}
           onChangeText={setPassword}
           placeholder="비밀번호를 입력해주세요"
+          placeholderTextColor="#9CA3AF"
           secureTextEntry
           autoCapitalize="none"
           autoCorrect={false}
