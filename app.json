@@ -8,7 +8,8 @@
     "scheme": "mateonfe",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/images/logo_light.png",
+      "bundleIdentifier": "com.anonymous.MateOn-FE"
     },
     "web": {
       "output": "static",
@@ -28,6 +29,9 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "android": {
+      "package": "com.anonymous.MateOn_FE"
     }
   }
 }
