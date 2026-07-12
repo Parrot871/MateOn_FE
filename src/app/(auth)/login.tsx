@@ -1,5 +1,5 @@
 // src/app/(auth)/login.tsx
-import {KakaoLogo, ID, PW, MateOnLogo} from '@/images';
+import {KakaoLogo, ID, PW, MateOnLogo} from '@/assets/images/login';
 import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { useState } from 'react';
