@@ -34,7 +34,7 @@ export default function LoginScreen() {
         <TextInput
           value={id}
           onChangeText={setId}
-          placeholder="아이디를 입력해주세요"
+          placeholder="이메일을 입력해주세요"
           autoCapitalize="none"
           autoCorrect={false}
           className="flex-1 h-full ml-3 font-pretendard"
