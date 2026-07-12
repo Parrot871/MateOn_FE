@@ -1,11 +1,12 @@
 // src/app/(auth)/login.tsx
 import {KakaoLogo, ID, PW, MateOnLogo} from '@/assets/images/login';
 import { Image } from 'expo-image';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function LoginScreen() {
+  const router = useRouter();
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
 
@@ -54,7 +55,10 @@ export default function LoginScreen() {
         />
       </View>
 
-      <TouchableOpacity className="h-14 rounded-xl bg-[#3E6AF4] justify-center items-center mb-8">
+      <TouchableOpacity
+        onPress={() => router.push('/myInfo')}
+        className="h-14 rounded-xl bg-[#3E6AF4] justify-center items-center mb-8"
+      >
         <Text className="text-white text-lg font-pretendard-semibold">로그인</Text>
       </TouchableOpacity>
 
