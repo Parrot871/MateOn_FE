@@ -12,10 +12,10 @@ export default function LoginScreen() {
   return (
     <View className="flex-1 justify-center px-10 bg-[#8BA9FF]">
       
-      <View className="items-center mb-10">
-        <Image source={MateOnLogo} style={{ width: 150, height: 150 }} contentFit="contain" />
+      <View className="items-center mb-8">
+        <Image source={MateOnLogo} style={{ width: 150, height: 120 }} contentFit="contain" />
         <Text className="text-white text-5xl font-pretendard-medium">MateOn</Text>
-        <Text className="text-white text-lg font-pretendard mt-2 mb-2">함께할 최고의 팀원을 만나보세요</Text>
+        <Text className="text-white text-lg font-pretendard mt-2">함께할 최고의 팀원을 만나보세요</Text>
       </View>
 
       <TouchableOpacity className="h-14 rounded-xl bg-[#FAE100] flex-row justify-center items-center">
