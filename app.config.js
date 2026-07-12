@@ -1,6 +1,6 @@
 module.exports = {
   expo: {
-    name: "MateOn_FE",
+    name: "MateOn",
     slug: "MateOn_FE",
     version: "1.0.0",
     orientation: "portrait",
