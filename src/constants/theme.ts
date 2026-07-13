@@ -50,6 +50,13 @@ export const Fonts = Platform.select({
   },
 });
 
+export const PretendardFonts = {
+  'Pretendard-Regular': require('../../assets/fonts/Pretendard-Regular.ttf'),
+  'Pretendard-Medium': require('../../assets/fonts/Pretendard-Medium.ttf'),
+  'Pretendard-SemiBold': require('../../assets/fonts/Pretendard-SemiBold.ttf'),
+  'Pretendard-Bold': require('../../assets/fonts/Pretendard-Bold.ttf'),
+};
+
 export const Spacing = {
   half: 2,
   one: 4,
