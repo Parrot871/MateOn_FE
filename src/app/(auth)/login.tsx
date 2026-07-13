@@ -70,19 +70,17 @@ export default function LoginScreen() {
       </View>
 
       <TouchableOpacity
-        onPress={() => router.push('/myInfo')}
+        onPress={() => router.push('/')}
         className="h-14 rounded-xl bg-[#3E6AF4] justify-center items-center mb-8"
       >
         <Text className="text-white text-lg font-pretendard-semibold">로그인</Text>
       </TouchableOpacity>
 
       <Link href="/signup" asChild>
-        <View className="items-center">
-          <TouchableOpacity>
-            <Text className="text-white text-base font-pretendard-semibold"> MateOn으로 회원가입하기</Text>
-            <View className="h-px bg-white mt-0.5" />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity className="items-center">
+          <Text className="text-white text-base font-pretendard-semibold"> MateOn으로 회원가입하기</Text>
+          <View className="h-px bg-white mt-0.5" />
+        </TouchableOpacity>
       </Link>
     </View>
   );
