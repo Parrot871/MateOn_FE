@@ -42,7 +42,7 @@ export default function NavigationBar({ state, navigation }: NavigationBarProps)
         onPress={() => navigation.navigate(tab.routeName)}
         className="flex-1 items-center"
       >
-        <Image source={Icon} style={{ width: 24, height: 24 }} contentFit="contain" />
+        <Image source={Icon} style={{ width: 30, height: 30 }} contentFit="contain" />
         <Text className={`mt-1 text-xs ${isFocused ? 'text-slate-900' : 'text-slate-400'}`}>
           {tab.label}
         </Text>
