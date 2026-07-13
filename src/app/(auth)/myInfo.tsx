@@ -56,7 +56,7 @@ export default function MyInfoScreen() {
 
   const handleSubmit = () => {
     if (!isComplete) return;
-    router.replace('/');
+    router.replace('/(tabs)');
   };
 
   const handlePickPortfolio = async () => {
