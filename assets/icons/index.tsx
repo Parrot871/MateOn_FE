@@ -1,4 +1,5 @@
 export { default as BookFill } from './book_fill.svg';
+export { default as Dreamy } from './dreamy.svg';
 export { default as FlagFill } from './flag_fill.svg';
 export { default as GroupFill } from './group_fill.svg';
 export { default as HomeFill } from './home_fill.svg';
