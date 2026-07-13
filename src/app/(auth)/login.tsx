@@ -1,6 +1,6 @@
 // src/app/(auth)/login.tsx
 import { loginWithKakao } from '@/api/auth';
-import {KakaoLogo, ID, PW, MateOnLogo} from '@/assets/images/login';
+import { ID, KakaoLogo, MateOnLogo, PW } from '@/assets/images/login';
 import { login as kakaoLogin } from '@react-native-seoul/kakao-login';
 import { Image } from 'expo-image';
 import { Link, useRouter } from 'expo-router';
@@ -70,7 +70,7 @@ export default function LoginScreen() {
       </View>
 
       <TouchableOpacity
-        onPress={() => router.push('/')}
+        onPress={() => router.push('/(tabs)')}
         className="h-14 rounded-xl bg-[#3E6AF4] justify-center items-center mb-8"
       >
         <Text className="text-white text-lg font-pretendard-semibold">로그인</Text>
