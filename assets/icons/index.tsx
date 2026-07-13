@@ -1,0 +1,20 @@
+export { default as BookFill } from './book_fill.svg';
+export { default as FlagFill } from './flag_fill.svg';
+export { default as GroupFill } from './group_fill.svg';
+export { default as HomeFill } from './home_fill.svg';
+export { default as HomeLine } from './home_line.svg';
+export { default as MessageFill } from './message_fill.svg';
+export { default as MessageFillBasic } from './message_fill_basic.svg';
+export { default as MessageLine } from './message_line.svg';
+export { default as MoreFill } from './more_fill.svg';
+export { default as NotificationColored } from './notification_colored.svg';
+export { default as NotificationLine } from './notification_line.svg';
+export { default as RocketFill } from './rocket_fill.svg';
+export { default as SearchFill } from './search_fill.svg';
+export { default as SearchLine } from './search_line.svg';
+export { default as SearchLineBasic } from './search_line_basic.svg';
+export { default as TrophyFill } from './trophy_fill.svg';
+export { default as UserAddFill } from './user_add_fill.svg';
+export { default as UserFill } from './user_fill.svg';
+export { default as UserLine } from './user_line.svg';
+
