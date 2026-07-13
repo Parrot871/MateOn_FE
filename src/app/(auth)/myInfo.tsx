@@ -56,7 +56,7 @@ export default function MyInfoScreen() {
 
   const handleSubmit = () => {
     if (!isComplete) return;
-    router.replace('/(tabs)');
+    router.replace('/signup-complete');
   };
 
   const handlePickPortfolio = async () => {
@@ -79,7 +79,7 @@ export default function MyInfoScreen() {
       </TouchableOpacity>
 
       <ScrollView className="flex-1" contentContainerClassName="px-8 pb-10">
-        <Text className="text-black text-3xl font-pretendard-bold mb-8">내 정보 입력을 완료해주세요</Text>
+        <Text className="text-black text-2xl font-pretendard-bold mb-8">내 정보 입력을 완료해주세요</Text>
 
         <Text className="text-black font-pretendard-semibold mb-2 text-xl">이름</Text>
         <TextInput
