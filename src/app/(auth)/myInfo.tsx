@@ -1,9 +1,10 @@
 // src/app/(auth)/myInfo.tsx
+import { signUp } from '@/api/auth';
 import { PdfImg } from '@/assets/images/login';
 import { Back } from '@/assets/images/tool';
 import * as DocumentPicker from 'expo-document-picker';
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
@@ -43,20 +44,77 @@ function ChipGroup({
 
 export default function MyInfoScreen() {
   const router = useRouter();
+  const { email, password, passwordConfirm, verificationToken, provider } = useLocalSearchParams<{
+    email?: string;
+    password?: string;
+    passwordConfirm?: string;
+    verificationToken?: string;
+    provider?: 'KAKAO';
+  }>();
   const [name, setName] = useState('');
   const [track, setTrack] = useState<string | null>(null);
   const [isTrackOpen, setIsTrackOpen] = useState(false);
-  const [department, setDepartment] = useState('');
+  const [major, setMajor] = useState('');
   const [job1, setJob1] = useState('');
   const [job2, setJob2] = useState('');
   const [job3, setJob3] = useState('');
   const [portfolio, setPortfolio] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const isComplete = !!(name && track && department && job1 && job2 && job3);
+  const isComplete = !!(name && track && major && job1 && job2 && job3);
 
-  const handleSubmit = () => {
-    if (!isComplete) return;
-    router.replace('/signup-complete');
+  const handleSubmit = async () => {
+    if (!isComplete || isSubmitting) return;
+
+    const isKakaoFlow = provider === 'KAKAO';
+    const isLocalFlow = !!(email && password && passwordConfirm && verificationToken);
+
+    if (isKakaoFlow || isLocalFlow) {
+      setIsSubmitting(true);
+      try {
+        await signUp(
+          isKakaoFlow
+            ? {
+                email: email ?? '',
+                provider: 'KAKAO',
+                providerId: null,
+                schoolEmail: null,
+                name,
+                college: track!,
+                major,
+                interestJobPrimary: job1,
+                interestJobSecondary: job2,
+                interestJobTertiary: job3,
+                tagline: null,
+              }
+            : {
+                email: email!,
+                password,
+                passwordConfirm,
+                verificationToken,
+                provider: 'LOCAL',
+                providerId: null,
+                schoolEmail: null,
+                name,
+                college: track!,
+                major,
+                interestJobPrimary: job1,
+                interestJobSecondary: job2,
+                interestJobTertiary: job3,
+                tagline: null,
+              }
+        );
+      } catch (error) {
+        Alert.alert('회원가입 실패', error instanceof Error ? error.message : '잠시 후 다시 시도해주세요.', [
+          { text: '확인' },
+        ]);
+        setIsSubmitting(false);
+        return;
+      }
+      setIsSubmitting(false);
+    }
+
+    router.replace({ pathname: '/signup-complete', params: { name } });
   };
 
   const handlePickPortfolio = async () => {
@@ -110,8 +168,8 @@ export default function MyInfoScreen() {
             <View className="flex-1">
               <Text className="text-black font-pretendard-semibold mb-2 text-xl">학과</Text>
               <TextInput
-                value={department}
-                onChangeText={setDepartment}
+                value={major}
+                onChangeText={setMajor}
                 placeholder="학과 입력"
                 placeholderTextColor="#9CA3AF"
                 style={{ verticalAlign: 'middle' }}
@@ -181,10 +239,10 @@ export default function MyInfoScreen() {
 
         <TouchableOpacity
           onPress={handleSubmit}
-          disabled={!isComplete}
+          disabled={!isComplete || isSubmitting}
           className={`h-14 rounded-xl justify-center items-center ${isComplete ? 'bg-[#3E6AF4]' : 'bg-[#3E6AF4]/40'}`}
         >
-          <Text className="text-white text-lg font-pretendard-semibold">완료</Text>
+          <Text className="text-white text-lg font-pretendard-semibold">{isSubmitting ? '처리 중...' : '완료'}</Text>
         </TouchableOpacity>
 
       </ScrollView>

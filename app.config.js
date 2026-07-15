@@ -31,6 +31,7 @@ module.exports = {
           kakaoAppKey: process.env.KAKAO_NATIVE_APP_KEY,
         },
       ],
+      "expo-secure-store",
     ],
     experiments: {
       typedRoutes: true,

@@ -1,6 +1,9 @@
+import { clearTokens } from '@/api/tokenStorage';
+import { getMyProfile, type UserProfile } from '@/api/user';
 import { Back, Flag, MypageMLogo, NotificationNewDot, UserIcon } from '@/assets/images/tool';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 
@@ -43,7 +46,7 @@ function CircleProgress({
         />
       </Svg>
       <View className="absolute items-center">
-        <Text className="text-black text-xl font-pretendard-bold">{label}</Text>
+        <Text className="text-black text-2xl font-pretendard-bold">{label}</Text>
       </View>
     </View>
   );
@@ -57,6 +60,13 @@ const ACTIVITIES = [
 
 export default function MypageScreen() {
   const router = useRouter();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    getMyProfile()
+      .then(setProfile)
+      .catch((error) => console.error('내 정보 조회 실패:', error));
+  }, []);
 
   const SETTINGS = [
     { label: '학교 인증', onPress: () => {} },
@@ -66,7 +76,14 @@ export default function MypageScreen() {
       onPress: () =>
         Alert.alert('로그아웃', '정말 로그아웃 하시겠습니까?', [
           { text: '취소', style: 'cancel' },
-          { text: '로그아웃', style: 'destructive', onPress: () => router.replace('/login') },
+          {
+            text: '로그아웃',
+            style: 'destructive',
+            onPress: () => {
+              clearTokens();
+              router.replace('/login');
+            },
+          },
         ]),
     },
   ];
@@ -90,17 +107,21 @@ export default function MypageScreen() {
         </View>
 
         <View className="ml-8">
-          <Text className="text-black text-3xl font-pretendard-semibold">지은</Text>
-          <Text className="text-gray-700 font-pretendard mt-1">학교 인증이 필요합니다.</Text>
-          <Text className="text-gray-400 font-pretendard mt-0.5">희망직무 : 데이터분석가</Text>
+          <Text className="text-black text-3xl font-pretendard-semibold">{profile?.name ?? ''}</Text>
+          <Text className="text-gray-700 font-pretendard text-lg">
+            {profile?.schoolVerified ? '재학생 인증 완료' : '재학생 인증 필요'}
+          </Text>
+          <Text className="text-gray-400 font-pretendard text-lg mt-0.5">
+            희망직무 : {profile?.interestJobPrimary ?? ''}
+          </Text>
         </View>
       </View>
 
       <TouchableOpacity className="h-12 mb-8 rounded-xl border border-[#3E6AF4] bg-white justify-center items-center">
-        <Text className="text-[#3E6AF4] font-pretendard-semibold">회원정보 수정</Text>
+        <Text className="text-[#3E6AF4] text-lg font-pretendard-semibold">회원정보 수정</Text>
       </TouchableOpacity>
 
-      <Text className="text-black text-lg font-pretendard-bold mb-3">내 점수</Text>
+      <Text className="text-black text-xl font-pretendard-bold mb-3">내 점수</Text>
       <View className="flex-row justify-around items-center mb-8 py-6 rounded-2xl border border-gray-200">
         <View className="items-center">
           <CircleProgress
@@ -112,8 +133,8 @@ export default function MypageScreen() {
             trackColor="#DCE4FE"
             label="92"
           />
-          <Text className="text-black font-pretendard-semibold mt-2">포트폴리오 점수</Text>
-          <Text className="text-gray-400 font-pretendard text-xs mt-0.5">92 /100</Text>
+          <Text className="text-black font-pretendard-semibold text-lg mt-2">포트폴리오 점수</Text>
+          <Text className="text-gray-400 font-pretendard text-sm mt-0.5">92 /100</Text>
         </View>
 
         <View className="items-center">
@@ -126,23 +147,23 @@ export default function MypageScreen() {
             trackColor="#DCE4FE"
             label="36.5"
           />
-          <Text className="text-black font-pretendard-semibold mt-2">협업 온도</Text>
-          <Text className="text-gray-400 font-pretendard text-xs mt-0.5">36.5</Text>
+          <Text className="text-black font-pretendard-semibold text-lg mt-2">협업 온도</Text>
+          <Text className="text-gray-400 font-pretendard text-sm mt-0.5">36.5</Text>
         </View>
       </View>
 
-      <Text className="text-black text-lg font-pretendard-bold mb-3">내 활동</Text>
+      <Text className="text-black text-xl font-pretendard-bold mb-3">내 활동</Text>
       <View className="flex-row gap-3 mb-8">
         {ACTIVITIES.map((activity) => (
           <View key={activity.label} className="flex-1 items-center py-5 rounded-xl border border-gray-200">
             <Image source={Flag} style={{ width: 22, height: 22 }} contentFit="contain" />
-            <Text className="text-black font-pretendard-semibold mt-2 text-sm">{activity.label}</Text>
-            <Text className="text-black font-pretendard mt-0.5">{activity.count}개</Text>
+            <Text className="text-black font-pretendard-semibold mt-2 text-base">{activity.label}</Text>
+            <Text className="text-black font-pretendard text-lg mt-0.5">{activity.count}개</Text>
           </View>
         ))}
       </View>
 
-      <Text className="text-black text-lg font-pretendard-bold mb-1">계정 설정</Text>
+      <Text className="text-black text-xl font-pretendard-bold mb-1">계정 설정</Text>
       <View className="border-t border-gray-100">
         {SETTINGS.map((setting, index) => (
           <TouchableOpacity
@@ -152,7 +173,14 @@ export default function MypageScreen() {
               index !== SETTINGS.length - 1 ? 'border-b border-gray-100' : ''
             }`}
           >
-            <Text className="text-black font-pretendard">{setting.label}</Text>
+            <View className="flex-row items-center">
+              <Text className="text-black text-lg font-pretendard">{setting.label}</Text>
+              {setting.label === '학교 인증' && profile?.schoolVerified && (
+                <View className="ml-2 px-2 py-0.5 rounded-full bg-green-50">
+                  <Text className="text-green-600 text-sm font-pretendard-semibold">인증 완료됨</Text>
+                </View>
+              )}
+            </View>
             <Image
               source={Back}
               style={{ width: 14, height: 14, transform: [{ rotate: '180deg' }] }}
