@@ -31,7 +31,7 @@ export default function RootLayout() {
       setIsAuthenticated(!!token);
       setIsAuthChecked(true);
     });
-  }, [segments]);   // ⭐ 화면(경로) 바뀔 때마다 토큰 다시 확인
+  }, [segments]);   // 화면(경로) 바뀔 때마다 토큰 다시 확인
 
   useEffect(() => {
     if (!isAuthChecked) return;
