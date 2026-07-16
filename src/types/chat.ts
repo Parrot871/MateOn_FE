@@ -11,3 +11,12 @@ export interface ChatRoom {
   lastMessageAt: string | null; // "YYYY-MM-DDTHH:mm:ss"
   unreadCount: number;
 }
+
+export interface StompChatMessage {
+  messageId: number;
+  roomId: number;
+  senderId: number;
+  senderName: string;
+  content: string;
+  createdAt: string;
+}
