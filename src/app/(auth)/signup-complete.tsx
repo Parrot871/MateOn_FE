@@ -1,13 +1,12 @@
 // src/app/(auth)/signup-complete.tsx
 import { Check, X } from '@/assets/images/tool';
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Text, TouchableOpacity, View } from 'react-native';
-
-const name = '홍길동'; // Replace with the actual user's name
 
 export default function SignupCompleteScreen() {
   const router = useRouter();
+  const { name } = useLocalSearchParams<{ name?: string }>();
 
   return (
     <View className="flex-1 bg-white">
@@ -17,7 +16,7 @@ export default function SignupCompleteScreen() {
 
       <View className="flex-1 mt-60 items-center px-10">
         <Image source={Check} style={{ width: 96, height: 96 }} contentFit="contain" />
-        <Text className="text-black text-2xl text-center font-pretendard-semibold mt-6">회원가입이{"\n"}완료되었습니다.</Text>
+        <Text className="text-black text-2xl text-center font-pretendard-semibold mt-6">MateOn 회원가입이{"\n"}완료되었습니다.</Text>
         <Text className="text-black text-lg text-center font-pretendard mt-4">{name}님의 회원가입을 축하합니다.</Text>
       </View>
 

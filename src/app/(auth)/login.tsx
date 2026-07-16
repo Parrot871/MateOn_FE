@@ -1,24 +1,46 @@
 // src/app/(auth)/login.tsx
-import { loginWithKakao } from '@/api/auth';
+import { loginWithEmail, loginWithKakao } from '@/api/auth';
 import { ID, KakaoLogo, MateOnLogo, PW } from '@/assets/images/login';
-import { login as kakaoLogin } from '@react-native-seoul/kakao-login';
+import { getProfile as getKakaoProfile, login as kakaoLogin } from '@react-native-seoul/kakao-login';
 import { Image } from 'expo-image';
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function LoginScreen() {
   const router = useRouter();
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const handleKakaoLogin = async () => {
     try {
       const { accessToken } = await kakaoLogin();
       await loginWithKakao(accessToken);
-      router.replace('/');
+      const profile = await getKakaoProfile();
+      router.replace({ pathname: '/myInfo', params: { provider: 'KAKAO', email: profile.email } });
     } catch (error) {
       console.error('카카오 로그인 실패:', error);
+    }
+  };
+
+  const handleLogin = async () => {
+    if (!id || !password) {
+      Alert.alert('로그인 실패', '아이디와 비밀번호를 입력해주세요.', [{ text: '확인' }]);
+      return;
+    }
+    if (isLoggingIn) return;
+
+    setIsLoggingIn(true);
+    try {
+      await loginWithEmail(id, password);
+      router.replace('/');
+    } catch (error) {
+      Alert.alert('로그인 실패', error instanceof Error ? error.message : '잠시 후 다시 시도해주세요.', [
+        { text: '확인' },
+      ]);
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -70,16 +92,21 @@ export default function LoginScreen() {
       </View>
 
       <TouchableOpacity
-        onPress={() => router.push('/(tabs)')}
+        onPress={handleLogin}
+        disabled={isLoggingIn}
         className="h-14 rounded-xl bg-[#3E6AF4] justify-center items-center mb-8"
       >
-        <Text className="text-white text-lg font-pretendard-semibold">로그인</Text>
+        <Text className="text-white text-lg font-pretendard-semibold">{isLoggingIn ? '로그인 중...' : '로그인'}</Text>
       </TouchableOpacity>
 
       <Link href="/signup" asChild>
-        <TouchableOpacity className="items-center">
-          <Text className="text-white text-base font-pretendard-semibold"> MateOn으로 회원가입하기</Text>
-          <View className="h-px bg-white mt-0.5" />
+        <TouchableOpacity className="self-center">
+          <Text
+            style={{ textDecorationLine: 'underline', textDecorationColor: 'white' }}
+            className="text-white text-base font-pretendard-semibold"
+          >
+            교육기관 이메일로 회원가입하기
+          </Text>
         </TouchableOpacity>
       </Link>
     </View>
