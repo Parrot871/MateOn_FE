@@ -12,7 +12,7 @@ export function MessageBubble({ message, isMine }: Props) {
   if (isMine) {
     return (
       <View className="px-4 mb-3 items-end">
-        <View className="flex-row items-end flex-row-reverse">
+        <View className="flex-row-reverse items-end">
           <View className="max-w-[75%] rounded-3xl rounded-tr-none px-4 py-2 bg-blue-500">
             <Text className="text-white">{message.content}</Text>
           </View>
