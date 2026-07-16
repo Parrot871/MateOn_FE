@@ -6,6 +6,7 @@
     "@expo/ui": "~57.0.4",
     "@react-native-seoul/kakao-login": "^5.4.2",
     "@react-navigation/bottom-tabs": "^7.18.8",
+    "@stomp/stompjs": "^7.3.0",
     "expo": "~57.0.4",
     "expo-constants": "~57.0.3",
     "expo-dev-client": "~57.0.5",
