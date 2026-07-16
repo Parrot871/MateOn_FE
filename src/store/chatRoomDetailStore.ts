@@ -1,6 +1,6 @@
 // src/store/chatRoomDetailStore.ts
 import { fetchChatMessages, markChatAsRead } from '@/api/chat';
-import { connectStomp, sendChatMessage, subscribeToRoom, unsubscribeFromRoom } from '@/lib/StompClient';
+import { connectStomp, sendChatMessage, subscribeToRoom, unsubscribeFromRoom } from '@/lib/stompClient';
 import type { StompChatMessage } from '@/types/chat';
 import type { StompSubscription } from '@stomp/stompjs';
 import { create } from 'zustand';
