@@ -128,7 +128,7 @@ export default function MypageScreen() {
       </View>
 
       <TouchableOpacity
-        onPress={() => router.push('/editProfile')}
+        onPress={() => router.push('/editprofile')}
         className="h-12 mb-8 rounded-xl border border-[#3E6AF4] bg-white justify-center items-center"
       >
         <Text className="text-[#3E6AF4] text-lg font-pretendard-semibold">회원정보 수정</Text>

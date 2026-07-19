@@ -102,7 +102,7 @@ export default function EditProfileScreen() {
         interestJobSecondary: job2,
         interestJobTertiary: job3,
       });
-      Alert.alert('알림', '회원정보가 수정되었습니다.', [{ text: '확인', onPress: () => router.back() }]);
+      Alert.alert('회원정보 수정 완료', '회원정보가 수정되었습니다.', [{ text: '확인', onPress: () => router.back() }]);
     } catch (error) {
       Alert.alert('회원정보 수정 실패', error instanceof Error ? error.message : '잠시 후 다시 시도해주세요.', [
         { text: '확인' },
