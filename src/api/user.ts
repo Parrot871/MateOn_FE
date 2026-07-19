@@ -22,14 +22,45 @@ export type UserProfile = {
 export async function getMyProfile() {
   const accessToken = await getAccessToken();
 
+  if (!accessToken) {
+    throw new Error('로그인이 필요합니다.');
+  }
+
   const response = await fetch(`${API_BASE_URL}/api/users/me`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 
-  const result: ApiResponse<UserProfile> = await response.json();
+  const text = await response.text();
+  const result: ApiResponse<UserProfile> | null = text ? JSON.parse(text) : null;
 
-  if (!response.ok || !result.success) {
-    throw new Error(result.message || `내 정보 조회 실패: ${response.status}`);
+  if (!response.ok || !result?.success) {
+    throw new Error(result?.message || `내 정보 조회 실패: ${response.status}`);
+  }
+
+  return result.data;
+}
+
+export async function changePassword(currentPassword: string, newPassword: string, newPasswordConfirm: string) {
+  const accessToken = await getAccessToken();
+
+  if (!accessToken) {
+    throw new Error('로그인이 필요합니다.');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/users/password/change`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ currentPassword, newPassword, newPasswordConfirm }),
+  });
+
+  const text = await response.text();
+  const result: ApiResponse<unknown> | null = text ? JSON.parse(text) : null;
+
+  if (!response.ok || !result?.success) {
+    throw new Error(result?.message || `비밀번호 변경 실패: ${response.status}`);
   }
 
   return result.data;

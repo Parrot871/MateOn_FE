@@ -23,10 +23,7 @@ function TopSafeAreaFill() {
 export default function TabLayout() {
   return (
     <>
-      <Tabs
-        screenOptions={{ headerShown: false }}
-        tabBar={(props) => <NavigationBar {...props as any} />}
-      >
+      <Tabs screenOptions={{ headerShown: false }} tabBar={() => null}>
         <Tabs.Screen name="index" options={{ title: '홈' }} />
         <Tabs.Screen name="activity" options={{ title: '활동' }} />
         <Tabs.Screen name="chatbot" options={{ title: '챗봇' }} />
@@ -34,6 +31,7 @@ export default function TabLayout() {
         <Tabs.Screen name="my" options={{ title: '마이' }} />
       </Tabs>
       <TopSafeAreaFill />
+      <NavigationBar />
     </>
   );
 }

@@ -5,6 +5,7 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 
 function CircleProgress({
@@ -60,6 +61,7 @@ const ACTIVITIES = [
 
 export default function MypageScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
@@ -70,7 +72,7 @@ export default function MypageScreen() {
 
   const SETTINGS = [
     { label: '학교 인증', onPress: () => {} },
-    { label: '비밀번호 변경', onPress: () => {} },
+    { label: '비밀번호 변경', onPress: () => router.push('/pwchange') },
     {
       label: '로그아웃',
       onPress: () =>
@@ -89,7 +91,11 @@ export default function MypageScreen() {
   ];
 
   return (
-    <ScrollView className="flex-1 bg-white" contentContainerClassName="px-5 pb-10">
+    <ScrollView
+      className="flex-1 bg-white"
+      contentContainerClassName="px-5"
+      contentContainerStyle={{ paddingBottom: 90 + insets.bottom }}
+    >
       <View className="flex-row justify-between items-center pt-20 pb-6">
         <TouchableOpacity onPress={() => router.push('/')}>
           <Image source={MypageMLogo} style={{ width: 32, height: 32 }} contentFit="contain" />

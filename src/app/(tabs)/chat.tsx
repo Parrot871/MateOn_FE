@@ -85,7 +85,7 @@ export default function ChatListScreen() {
       ) : (
         <FlatList
           data={filteredRooms}
-          contentContainerStyle={{ paddingTop: 4 }}
+          contentContainerStyle={{ paddingTop: 4, paddingBottom: 90 + insets.bottom }}
           keyExtractor={(item) => String(item.roomId)}
           renderItem={({ item }) => (
             <ChatListItem
