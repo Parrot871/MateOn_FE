@@ -1,9 +1,10 @@
 import { clearTokens } from '@/api/tokenStorage';
 import { getMyProfile, type UserProfile } from '@/api/user';
 import { Back, Flag, MypageMLogo, NotificationNewDot, UserIcon } from '@/assets/images/tool';
+import { getUnivByEmail } from '@/utils/univ';
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
@@ -63,12 +64,15 @@ export default function MypageScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const univ = getUnivByEmail(profile?.email);
 
-  useEffect(() => {
-    getMyProfile()
-      .then(setProfile)
-      .catch((error) => console.error('내 정보 조회 실패:', error));
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      getMyProfile()
+        .then(setProfile)
+        .catch((error) => console.error('내 정보 조회 실패:', error));
+    }, [])
+  );
 
   const SETTINGS = [
     { label: '학교 인증', onPress: () => {} },
@@ -115,7 +119,7 @@ export default function MypageScreen() {
         <View className="ml-8">
           <Text className="text-black text-3xl font-pretendard-semibold">{profile?.name ?? ''}</Text>
           <Text className="text-gray-700 font-pretendard text-lg">
-            {profile?.schoolVerified ? '재학생 인증 완료' : '재학생 인증 필요'}
+            {profile?.schoolVerified ? `${univ ?? ''} ${profile?.major ?? ''} 재학생` : '재학생 인증 필요'}
           </Text>
           <Text className="text-gray-400 font-pretendard text-lg mt-0.5">
             희망직무 : {profile?.interestJobPrimary ?? ''}
@@ -123,7 +127,10 @@ export default function MypageScreen() {
         </View>
       </View>
 
-      <TouchableOpacity className="h-12 mb-8 rounded-xl border border-[#3E6AF4] bg-white justify-center items-center">
+      <TouchableOpacity
+        onPress={() => router.push('/editProfile')}
+        className="h-12 mb-8 rounded-xl border border-[#3E6AF4] bg-white justify-center items-center"
+      >
         <Text className="text-[#3E6AF4] text-lg font-pretendard-semibold">회원정보 수정</Text>
       </TouchableOpacity>
 
@@ -149,8 +156,8 @@ export default function MypageScreen() {
             max={100}
             size={88}
             strokeWidth={8}
-            color="#8BA9FF"
-            trackColor="#DCE4FE"
+            color="#EF4444"
+            trackColor="#FDE2E2"
             label="36.5"
           />
           <Text className="text-black font-pretendard-semibold text-lg mt-2">협업 온도</Text>
@@ -170,6 +177,7 @@ export default function MypageScreen() {
       </View>
 
       <Text className="text-black text-xl font-pretendard-bold mb-1">계정 설정</Text>
+      
       <View className="border-t border-gray-100">
         {SETTINGS.map((setting, index) => (
           <TouchableOpacity

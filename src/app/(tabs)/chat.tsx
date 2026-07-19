@@ -62,7 +62,7 @@ export default function ChatListScreen() {
         <View className="flex-row justify-between items-center mb-4">
           <Text className="text-2xl font-bold">채팅</Text>
           <TouchableOpacity>
-            <Image source={SearchLineBasic} style={{ width: 24, height: 24 }} contentFit="contain" />
+            <Image source={SearchLineBasic} style={{ width: 30, height: 30 }} contentFit="contain" />
           </TouchableOpacity>
         </View>
         <View className="flex-row mb-4">

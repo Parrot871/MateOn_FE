@@ -40,6 +40,41 @@ export async function getMyProfile() {
   return result.data;
 }
 
+export type UpdateProfilePayload = {
+  name: string;
+  college: string;
+  major: string;
+  interestJobPrimary: string;
+  interestJobSecondary: string;
+  interestJobTertiary: string;
+};
+
+export async function updateProfile(payload: UpdateProfilePayload) {
+  const accessToken = await getAccessToken();
+
+  if (!accessToken) {
+    throw new Error('로그인이 필요합니다.');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/users/me`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const text = await response.text();
+  const result: ApiResponse<UserProfile> | null = text ? JSON.parse(text) : null;
+
+  if (!response.ok || !result?.success) {
+    throw new Error(result?.message || `회원정보 수정 실패: ${response.status}`);
+  }
+
+  return result.data;
+}
+
 export async function changePassword(currentPassword: string, newPassword: string, newPasswordConfirm: string) {
   const accessToken = await getAccessToken();
 
