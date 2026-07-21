@@ -28,6 +28,7 @@ export default function NavigationBar() {
 
   const leftTabs = TABS.slice(0, 2);
   const rightTabs = TABS.slice(2, 4);
+  const isChatbotScreen = pathname === '/chatbot';
 
   const renderTab = (tab: (typeof TABS)[number]) => {
     const isFocused = pathname === tab.path;
@@ -47,17 +48,25 @@ export default function NavigationBar() {
       style={{ height: 90 + insets.bottom }}
       pointerEvents="box-none"
     >
-      <View
-        className="absolute self-center top-[-10] w-24 h-24 rounded-full z-10"
-        style={{ backgroundColor: '#FAFAFC' }}
-      />
-      <View className="absolute self-center top-[-4] w-20 h-20 rounded-full bg-[#C9C9EE] z-10" />
-      <Pressable
-        onPress={() => router.push('/chatbot' as never)}
-        className="absolute self-center top-0 w-16 h-16 rounded-full items-center justify-center z-10"
-      >
-        <Image source={require('@/assets/icons/dreamy.png')} style={{ width: 64, height: 64 }} contentFit="contain" />
-      </Pressable>
+      {!isChatbotScreen && (
+        <>
+          <View
+            className="absolute self-center top-[-10] w-24 h-24 rounded-full z-10"
+            style={{ backgroundColor: '#FAFAFC' }}
+          />
+          <View className="absolute self-center top-[-4] w-20 h-20 rounded-full bg-[#C9C9EE] z-10" />
+          <Pressable
+            onPress={() => router.push('/chatbot' as never)}
+            className="absolute self-center top-0 w-16 h-16 rounded-full items-center justify-center z-10"
+          >
+            <Image
+              source={require('@/assets/icons/dreamy.png')}
+              style={{ width: 64, height: 64 }}
+              contentFit="contain"
+            />
+          </Pressable>
+        </>
+      )}
 
       <View
         className="absolute bottom-0 left-0 right-0 flex-row bg-white pt-2 border-t border-gray-100"

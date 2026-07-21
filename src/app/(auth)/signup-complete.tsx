@@ -1,12 +1,18 @@
 // src/app/(auth)/signup-complete.tsx
+import { setJustSignedUp } from '@/api/tokenStorage';
 import { Check, X } from '@/assets/images/tool';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 
 export default function SignupCompleteScreen() {
   const router = useRouter();
   const { name } = useLocalSearchParams<{ name?: string }>();
+
+  useEffect(() => {
+    setJustSignedUp();
+  }, []);
 
   return (
     <View className="flex-1 bg-white">
