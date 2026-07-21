@@ -217,24 +217,6 @@ export default function EditProfileScreen() {
           className="h-12 px-1 mb-8 bg-white text-black border-b border-black font-pretendard text-lg"
         />
 
-        <Text className="text-black font-pretendard-semibold mb-2 text-xl">포트폴리오</Text>
-        <TouchableOpacity
-          onPress={handlePickPortfolio}
-          className="h-40 mb-8 px-4 bg-gray-100 rounded-xl border border-gray-300 justify-center items-center gap-1"
-        >
-          <Image source={PdfImg} style={{ width: 28, height: 28 }} />
-          {portfolio ? (
-            <Text className="text-gray-500 font-pretendard text-base text-center">{portfolio.name}</Text>
-          ) : (
-            <>
-              <Text className="text-gray-500 font-pretendard-semibold text-xl text-center">
-                PDF 파일을 선택해주세요
-              </Text>
-              <Text className="text-gray-400 font-pretendard text-s text-center">최대 20MB</Text>
-            </>
-          )}
-        </TouchableOpacity>
-
         <TouchableOpacity
           onPress={handleSubmit}
           disabled={!isComplete || isSubmitting}

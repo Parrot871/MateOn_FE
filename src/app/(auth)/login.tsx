@@ -1,5 +1,6 @@
 // src/app/(auth)/login.tsx
 import { loginWithEmail, loginWithKakao } from '@/api/auth';
+import { peekJustSignedUp } from '@/api/tokenStorage';
 import { ID, KakaoLogo, MateOnLogo, PW } from '@/assets/images/login';
 import { getProfile as getKakaoProfile, login as kakaoLogin } from '@react-native-seoul/kakao-login';
 import { Image } from 'expo-image';
@@ -34,7 +35,8 @@ export default function LoginScreen() {
     setIsLoggingIn(true);
     try {
       await loginWithEmail(id, password);
-      router.replace('/');
+      const justSignedUp = await peekJustSignedUp();
+      router.replace(justSignedUp ? '/chatbot' : '/');
     } catch (error) {
       Alert.alert('로그인 실패', error instanceof Error ? error.message : '잠시 후 다시 시도해주세요.', [
         { text: '확인' },

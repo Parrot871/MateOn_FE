@@ -57,7 +57,7 @@ function CircleProgress({
 const ACTIVITIES = [
   { label: '지원한 팀', count: 2, icon: Flag, path: null },
   { label: '모집한 팀', count: 2, icon: Flag, path: null },
-  { label: '북마크', count: 2, icon: Bookmark, path: '/bookMark' },
+  { label: '팀원 평가', count: 2, icon: Bookmark, path: '/bookMark' },
 ] as const;
 
 export default function MypageScreen() {
