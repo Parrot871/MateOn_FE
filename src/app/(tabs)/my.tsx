@@ -1,6 +1,6 @@
 import { clearTokens } from '@/api/tokenStorage';
 import { getMyProfile, type UserProfile } from '@/api/user';
-import { Back, Flag, MypageMLogo, NotificationNewDot, UserIcon } from '@/assets/images/tool';
+import { Back, Bookmark, Flag, MypageMLogo, NotificationNewDot, UserIcon } from '@/assets/images/tool';
 import { getUnivByEmail } from '@/utils/univ';
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -55,10 +55,10 @@ function CircleProgress({
 }
 
 const ACTIVITIES = [
-  { label: '지원한 팀', count: 2 },
-  { label: '모집한 팀', count: 2 },
-  { label: '북마크', count: 2 },
-];
+  { label: '지원한 팀', count: 2, icon: Flag, path: null },
+  { label: '모집한 팀', count: 2, icon: Flag, path: null },
+  { label: '북마크', count: 2, icon: Bookmark, path: '/bookMark' },
+] as const;
 
 export default function MypageScreen() {
   const router = useRouter();
@@ -134,45 +134,34 @@ export default function MypageScreen() {
         <Text className="text-[#3E6AF4] text-lg font-pretendard-semibold">회원정보 수정</Text>
       </TouchableOpacity>
 
-      <Text className="text-black text-xl font-pretendard-bold mb-3">내 점수</Text>
+      <Text className="text-black text-xl font-pretendard-bold mb-3">내 협업온도</Text>
       <View className="flex-row justify-around items-center mb-8 py-6 rounded-2xl border border-gray-200">
-        <View className="items-center">
-          <CircleProgress
-            value={92}
-            max={100}
-            size={88}
-            strokeWidth={8}
-            color="#3E6AF4"
-            trackColor="#DCE4FE"
-            label="92"
-          />
-          <Text className="text-black font-pretendard-semibold text-lg mt-2">포트폴리오 점수</Text>
-          <Text className="text-gray-400 font-pretendard text-sm mt-0.5">92 /100</Text>
-        </View>
-
         <View className="items-center">
           <CircleProgress
             value={36.5}
             max={100}
             size={88}
             strokeWidth={8}
-            color="#EF4444"
+            color="#FF0000"
             trackColor="#FDE2E2"
             label="36.5"
           />
-          <Text className="text-black font-pretendard-semibold text-lg mt-2">협업 온도</Text>
-          <Text className="text-gray-400 font-pretendard text-sm mt-0.5">36.5</Text>
         </View>
       </View>
 
       <Text className="text-black text-xl font-pretendard-bold mb-3">내 활동</Text>
       <View className="flex-row gap-3 mb-8">
         {ACTIVITIES.map((activity) => (
-          <View key={activity.label} className="flex-1 items-center py-5 rounded-xl border border-gray-200">
-            <Image source={Flag} style={{ width: 22, height: 22 }} contentFit="contain" />
+          <TouchableOpacity
+            key={activity.label}
+            disabled={!activity.path}
+            onPress={() => activity.path && router.push(activity.path)}
+            className="flex-1 items-center py-5 rounded-xl border border-gray-200"
+          >
+            <Image source={activity.icon} style={{ width: 22, height: 22 }} contentFit="contain" />
             <Text className="text-black font-pretendard-semibold mt-2 text-base">{activity.label}</Text>
             <Text className="text-black font-pretendard text-lg mt-0.5">{activity.count}개</Text>
-          </View>
+          </TouchableOpacity>
         ))}
       </View>
 

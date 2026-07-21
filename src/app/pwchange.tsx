@@ -1,7 +1,7 @@
 // src/app/pwchange.tsx
 import { clearTokens } from '@/api/tokenStorage';
 import { changePassword } from '@/api/user';
-import { Lock, X } from '@/assets/images/tool';
+import { Back, Lock } from '@/assets/images/tool';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -47,11 +47,11 @@ export default function PasswordChangeScreen() {
   return (
     <View className="flex-1 bg-white">
       <View className="flex-row items-center justify-between px-6 pt-20 pb-10">
-        <View style={{ width: 26, height: 26 }} />
-        <Text className="text-black text-2xl font-pretendard-bold">비밀번호 변경</Text>
         <TouchableOpacity onPress={() => router.back()}>
-          <Image source={X} style={{ width: 26, height: 26 }} contentFit="contain" />
+          <Image source={Back} style={{ width: 26, height: 26 }} contentFit="contain" />
         </TouchableOpacity>
+        <Text className="text-black text-2xl font-pretendard-bold">비밀번호 변경</Text>
+        <View style={{ width: 26, height: 26 }} />
       </View>
 
       <View className="items-center mb-8">

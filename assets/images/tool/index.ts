@@ -6,3 +6,5 @@ export { default as NotificationNewDot } from './notification_newdot.svg';
 export { default as UserIcon } from './user.svg';
 export { default as MypageMLogo } from './mypageMLogo.svg';
 export { default as Lock } from './lock.svg';
+export { default as Bookmark } from './bookmark.svg';
+export { default as BookmarkFilled } from './bookmark_filled.svg';

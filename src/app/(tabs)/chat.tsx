@@ -57,10 +57,10 @@ export default function ChatListScreen() {
   }, [rooms, selectedFilter]);
 
   return (
-    <View className="flex-1" style={{ paddingTop: insets.top }}>
-      <View className="px-4 pt-4 bg-white">
+    <View className="flex-1">
+      <View className="px-5 pt-20 pb-6 bg-white">
         <View className="flex-row justify-between items-center mb-4">
-          <Text className="text-2xl font-bold">채팅</Text>
+          <Text className="text-3xl font-bold">채팅</Text>
           <TouchableOpacity>
             <Image source={SearchLineBasic} style={{ width: 30, height: 30 }} contentFit="contain" />
           </TouchableOpacity>

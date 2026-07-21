@@ -118,13 +118,15 @@ export default function EditProfileScreen() {
 
   return (
     <View className="flex-1 bg-white">
-      <TouchableOpacity onPress={() => router.back()} className="px-6 pt-20 pb-6">
-        <Image source={Back} style={{ width: 24, height: 24 }} contentFit="contain" />
-      </TouchableOpacity>
+      <View className="flex-row items-center justify-between px-6 pt-20 pb-10">
+        <TouchableOpacity onPress={() => router.back()}>
+          <Image source={Back} style={{ width: 26, height: 26 }} contentFit="contain" />
+        </TouchableOpacity>
+        <Text className="text-black text-2xl font-pretendard-bold">회원정보 수정</Text>
+        <View style={{ width: 26, height: 26 }} />
+      </View>
 
       <ScrollView className="flex-1" contentContainerClassName="px-8 pb-10">
-        <Text className="text-black text-2xl font-pretendard-bold mb-8">회원정보 수정</Text>
-
         <Text className="text-black font-pretendard-semibold mb-2 text-xl">이름</Text>
         <TextInput
           value={name}
@@ -215,7 +217,7 @@ export default function EditProfileScreen() {
           className="h-12 px-1 mb-8 bg-white text-black border-b border-black font-pretendard text-lg"
         />
 
-        <Text className="text-black font-pretendard-semibold mb-2">포트폴리오</Text>
+        <Text className="text-black font-pretendard-semibold mb-2 text-xl">포트폴리오</Text>
         <TouchableOpacity
           onPress={handlePickPortfolio}
           className="h-40 mb-8 px-4 bg-gray-100 rounded-xl border border-gray-300 justify-center items-center gap-1"
