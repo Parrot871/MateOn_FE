@@ -1,7 +1,8 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -9,6 +10,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import {
+  AiServerError,
+  getUserToTeamProposalDraft,
+  MatchingIntentRequiredError,
+  ProposalNotFoundError,
+} from '@/api/apply';
 import { getTeamDetail, type TeamDetail } from '@/api/team';
 
 type State =
@@ -22,29 +29,37 @@ export default function TeamDetailScreen() {
 
   const [state, setState] = useState<State>({ status: 'loading' });
 
-  useEffect(() => {
-    let mounted = true;
+  const load = useCallback(
+    async (isRefetch = false) => {
+      // 최초 진입일 때만 로딩 스피너를 보여준다.
+      // 재진입(포커스) 시에는 이미 화면에 데이터가 있으니 조용히 갱신만 한다.
+      if (!isRefetch) {
+        setState({ status: 'loading' });
+      }
 
-    const load = async () => {
-      setState({ status: 'loading' });
       try {
         const data = await getTeamDetail(Number(teamId));
-        if (!mounted) return;
         setState({ status: 'ready', data });
       } catch (err) {
-        if (!mounted) return;
+        if (isRefetch) {
+          // 조용한 갱신 실패는 무시한다 (이미 화면에 이전 데이터가 떠 있음).
+          return;
+        }
         setState({
           status: 'error',
           message: err instanceof Error ? err.message : '불러오지 못했어요.',
         });
       }
-    };
+    },
+    [teamId],
+  );
 
-    load();
-    return () => {
-      mounted = false;
-    };
-  }, [teamId]);
+  // 화면에 다시 포커스될 때마다(teamApply에서 뒤로가기로 돌아왔을 때 등) 조용히 재조회한다.
+  useFocusEffect(
+    useCallback(() => {
+      load(true);
+    }, [load]),
+  );
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
@@ -99,6 +114,44 @@ function TeamDetailContent({
   router: ReturnType<typeof useRouter>;
 }) {
   const additionalMembers = data.currentMemberCount - 1;
+  const [aiLoading, setAiLoading] = useState(false);
+
+  const handleAIApply = async () => {
+    if (aiLoading) return;
+    setAiLoading(true);
+    try {
+      const draft = await getUserToTeamProposalDraft(Number(teamId));
+      router.push({
+        pathname: '/teamApply',
+        params: {
+          teamId,
+          introduction: draft.summary,
+          message: draft.message,
+        },
+      });
+    } catch (err) {
+      if (err instanceof MatchingIntentRequiredError) {
+        Alert.alert(
+          '매칭 의도 설정이 필요해요',
+          '먼저 매칭 의도를 입력한 뒤 다시 시도해주세요.',
+        );
+      } else if (err instanceof ProposalNotFoundError) {
+        Alert.alert(
+          '알림',
+          '추천 목록에 없는 팀이거나 더 이상 존재하지 않는 팀이에요.',
+        );
+      } else if (err instanceof AiServerError) {
+        Alert.alert('AI 서버 오류', '잠시 후 다시 시도해주세요.');
+      } else {
+        Alert.alert(
+          '오류',
+          err instanceof Error ? err.message : '문구 초안을 불러오지 못했어요.',
+        );
+      }
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   return (
     <View className="flex-1">
@@ -298,17 +351,35 @@ function TeamDetailContent({
             </Text>
           </View>
         ) : (
-          <TouchableOpacity
-            activeOpacity={0.8}
-            className="bg-indigo-600 rounded-xl py-4 items-center"
-            disabled={!data.recruiting}
-            style={{ opacity: data.recruiting ? 1 : 0.4 }}
-            onPress={() => router.push(`/teamApply?teamId=${teamId}`)}
-          >
-            <Text className="text-white font-pretendard-bold text-base">
-              {data.recruiting ? '지원하기' : '모집이 마감됐어요'}
-            </Text>
-          </TouchableOpacity>
+          <>
+            {data.recruiting && (
+              <TouchableOpacity
+                activeOpacity={0.8}
+                className="bg-indigo-50 border border-indigo-600 rounded-xl py-4 items-center mb-2.5"
+                onPress={handleAIApply}
+                disabled={aiLoading}
+              >
+                {aiLoading ? (
+                  <ActivityIndicator color="#4F46E5" />
+                ) : (
+                  <Text className="text-indigo-600 font-pretendard-bold text-base">
+                    ✨ AI로 지원서 작성하기
+                  </Text>
+                )}
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              className="bg-indigo-600 rounded-xl py-4 items-center"
+              disabled={!data.recruiting}
+              style={{ opacity: data.recruiting ? 1 : 0.4 }}
+              onPress={() => router.push(`/teamApply?teamId=${teamId}`)}
+            >
+              <Text className="text-white font-pretendard-bold text-base">
+                {data.recruiting ? '지원하기' : '모집이 마감됐어요'}
+              </Text>
+            </TouchableOpacity>
+          </>
         )}
       </View>
     </View>
