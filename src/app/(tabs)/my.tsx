@@ -1,6 +1,7 @@
 import { clearTokens } from '@/api/tokenStorage';
 import { getMyProfile, type UserProfile } from '@/api/user';
 import { Back, Bookmark, Flag, MypageMLogo, NotificationNewDot, UserIcon } from '@/assets/images/tool';
+import { useTeamRecStore } from '@/store/teamRecStore';
 import { getUnivByEmail } from '@/utils/univ';
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -87,6 +88,7 @@ export default function MypageScreen() {
             style: 'destructive',
             onPress: () => {
               clearTokens();
+              useTeamRecStore.getState().reset();
               router.replace('/login');
             },
           },

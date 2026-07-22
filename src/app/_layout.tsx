@@ -1,6 +1,6 @@
-
 import { getAccessToken } from '@/api/tokenStorage';
 import { PretendardFonts } from '@/constants/theme';
+import { useTeamRecStore } from '@/store/teamRecStore';
 import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { DefaultTheme, ThemeProvider } from 'expo-router/react-navigation';
@@ -25,13 +25,14 @@ export default function RootLayout() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter();
   const segments = useSegments();
+  const fetchTeamRec = useTeamRecStore((s) => s.fetchTeamRec);
 
   useEffect(() => {
     getAccessToken().then((token) => {
       setIsAuthenticated(!!token);
       setIsAuthChecked(true);
     });
-  }, [segments]);   // 화면(경로) 바뀔 때마다 토큰 다시 확인
+  }, [segments]);
 
   useEffect(() => {
     if (!isAuthChecked) return;
@@ -44,6 +45,13 @@ export default function RootLayout() {
       router.replace('/');
     }
   }, [isAuthChecked, isAuthenticated, segments]);
+
+  // 인증 확인되면 홈에서 쓸 팀 추천 데이터 미리 당겨오기
+  useEffect(() => {
+    if (isAuthChecked && isAuthenticated) {
+      fetchTeamRec();
+    }
+  }, [isAuthChecked, isAuthenticated, fetchTeamRec]);
 
   useEffect(() => {
     if (fontsLoaded && isAuthChecked) {

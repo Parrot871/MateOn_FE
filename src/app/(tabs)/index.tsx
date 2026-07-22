@@ -1,10 +1,10 @@
-import { getRecommendedTeams, type TeamRecommendation } from '@/api/team';
 import { MypageMLogo, NotificationNewDot } from '@/assets/images/tool';
 import { EventCard, type ActivityItem } from '@/components/ui/EventCard';
 import TeamRecommendationCard from '@/components/ui/TeamRecommendationCard';
+import { useTeamRecStore } from '@/store/teamRecStore';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -20,20 +20,12 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const CARD_GAP = 12;
 const CARD_WIDTH = SCREEN_WIDTH * 0.8;
 
-const BANNER_WIDTH = SCREEN_WIDTH - 40; 
-const BANNER_HEIGHT = BANNER_WIDTH / 3; 
+const BANNER_WIDTH = SCREEN_WIDTH - 40;
+const BANNER_HEIGHT = BANNER_WIDTH / 3;
 
 const BANNERS = [
-  {
-    id: 'banner-1',
-    image: require('@/assets/images/banner_ai_dreamy.png'),
-    path: '/chatbot',
-  },
-  {
-    id: 'banner-2',
-    image: require('@/assets/images/banner_activity.png'),
-    path: '/activity',
-  },
+  { id: 'banner-1', image: require('@/assets/images/banner_ai_dreamy.png'), path: '/chatbot' },
+  { id: 'banner-2', image: require('@/assets/images/banner_activity.png'), path: '/activity' },
 ];
 
 const DUMMY_EVENTS: ActivityItem[] = [
@@ -49,51 +41,15 @@ const DUMMY_EVENTS: ActivityItem[] = [
   },
 ];
 
-type TeamRecState =
-  | { status: 'loading' }
-  | { status: 'empty' }
-  | { status: 'error'; message: string }
-  | { status: 'ready'; teams: TeamRecommendation[] };
-
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-
-  const [teamRec, setTeamRec] = useState<TeamRecState>({
-    status: 'loading',
-  });
+  const { teamRec, fetchTeamRec, hasHydrated } = useTeamRecStore();
 
   useEffect(() => {
-    let mounted = true;
-
-    const loadTeams = async () => {
-      setTeamRec({ status: 'loading' });
-
-      try {
-        const teams = await getRecommendedTeams({ limit: 10 });
-
-        if (!mounted) return;
-
-        setTeamRec(
-          teams.length ? { status: 'ready', teams } : { status: 'empty' }
-        );
-      } catch (err) {
-        if (!mounted) return;
-
-        setTeamRec({
-          status: 'error',
-          message:
-            err instanceof Error ? err.message : '팀 추천을 불러오지 못했어요.',
-        });
-      }
-    };
-
-    loadTeams();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
+    if (!hasHydrated) return;
+    fetchTeamRec();
+  }, [hasHydrated, fetchTeamRec]);
 
   return (
     <View className="flex-1 bg-white">
@@ -104,23 +60,13 @@ export default function HomeScreen() {
       >
         <View className="flex-row justify-between items-center pt-20 pb-6">
           <TouchableOpacity onPress={() => router.push('/')}>
-            <Image
-              source={MypageMLogo}
-              style={{ width: 32, height: 32 }}
-              contentFit="contain"
-            />
+            <Image source={MypageMLogo} style={{ width: 32, height: 32 }} contentFit="contain" />
           </TouchableOpacity>
-
           <TouchableOpacity onPress={() => router.push('/notification')}>
-            <Image
-              source={NotificationNewDot}
-              style={{ width: 32, height: 32 }}
-              contentFit="contain"
-            />
+            <Image source={NotificationNewDot} style={{ width: 32, height: 32 }} contentFit="contain" />
           </TouchableOpacity>
         </View>
 
-        {/* 배너 캐러셀 */}
         <View className="mb-8" style={{ height: BANNER_HEIGHT }}>
           <Carousel
             width={BANNER_WIDTH}
@@ -139,11 +85,7 @@ export default function HomeScreen() {
               >
                 <Image
                   source={item.image}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    borderRadius: 16,
-                  }}
+                  style={{ width: '100%', height: '100%', borderRadius: 16 }}
                   contentFit="cover"
                 />
               </TouchableOpacity>
@@ -151,30 +93,19 @@ export default function HomeScreen() {
           />
         </View>
 
-        {/* 공모전 추천 */}
         <View className="mb-8">
-          <Text className="text-black text-lg font-pretendard-bold mb-3">
-            맞춤 공모전 추천
-          </Text>
-
+          <Text className="text-black text-lg font-pretendard-bold mb-3">맞춤 공모전 추천</Text>
           <View className="gap-3">
             {DUMMY_EVENTS.map((event) => (
-              <EventCard
-                key={event.id}
-                item={event}
-                onPress={(id) => router.push(`/activity/${id}`)}
-              />
+              <EventCard key={event.id} item={event} onPress={(id) => router.push(`/activity/${id}`)} />
             ))}
           </View>
         </View>
 
-        {/* 팀 추천 */}
         <View className="mb-8">
-          <Text className="text-black text-lg font-pretendard-bold mb-3">
-            맞춤 팀 추천
-          </Text>
+          <Text className="text-black text-lg font-pretendard-bold mb-3">맞춤 팀 추천</Text>
 
-          {teamRec.status === 'loading' && (
+          {(teamRec.status === 'idle' || teamRec.status === 'loading') && (
             <View className="items-center justify-center py-10">
               <ActivityIndicator />
             </View>
@@ -199,21 +130,15 @@ export default function HomeScreen() {
               decelerationRate="fast"
               snapToInterval={CARD_WIDTH + CARD_GAP}
               snapToAlignment="start"
-              contentContainerStyle={{
-                paddingRight: 20,
-                gap: CARD_GAP,
-              }}
-              style={{
-                marginHorizontal: -20,
-                paddingLeft: 20,
-              }}
+              contentContainerStyle={{ paddingRight: 20, gap: CARD_GAP }}
+              style={{ marginHorizontal: -20, paddingLeft: 20 }}
             >
               {teamRec.teams.slice(0, 3).map((team) => (
                 <TeamRecommendationCard
                   key={team.teamId}
                   team={team}
                   width={CARD_WIDTH}
-                  onPress={() => router.push(`/team/${team.teamId}`)}
+                  onPress={() => router.push({ pathname: '/teamDetail', params: { teamId: team.teamId } })}
                 />
               ))}
             </ScrollView>

@@ -20,6 +20,31 @@ export type TeamRecommendation = {
   label: string;
 };
 
+export type TeamDetail = {
+  id: number;
+  title: string;
+  role: string[];
+  requiredSkills: string[];
+  promotionText: string;
+  characteristic: string;
+  capacity: number;
+  currentMemberCount: number;
+  eventId: number | null;
+  connectedActivityTitle: string | null;
+  connectedActivitySummary: string | null;
+  leaderId: number;
+  leaderName: string;
+  leaderCollege: string;
+  leaderGrade: string;
+  leaderMajor: string;
+  leaderCollaborationTemperature: number;
+  recruiting: boolean;
+  recruitmentStartDate: string;
+  recruitmentEndDate: string;
+  hasApplied: boolean;
+  leader: boolean;
+};
+
 type GetRecommendedTeamsParams = {
   eventId?: number;
   limit?: number;
@@ -60,6 +85,27 @@ export async function getRecommendedTeams(params?: GetRecommendedTeamsParams) {
       throw new MatchingIntentRequiredError(result.message);
     }
     throw new Error(result?.message || `팀 추천 조회 실패: ${response.status}`);
+  }
+
+  return result.data;
+}
+
+export async function getTeamDetail(teamId: number) {
+  const accessToken = await getAccessToken();
+
+  if (!accessToken) {
+    throw new Error('로그인이 필요합니다.');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/teams/${teamId}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  const text = await response.text();
+  const result: ApiResponse<TeamDetail> | null = text ? JSON.parse(text) : null;
+
+  if (!response.ok || !result?.success) {
+    throw new Error(result?.message || `팀 상세 조회 실패: ${response.status}`);
   }
 
   return result.data;
