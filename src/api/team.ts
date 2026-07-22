@@ -111,3 +111,41 @@ export async function getTeamDetail(teamId: number) {
   return result.data;
 }
 
+export type TeamRequestPayload = {
+  eventId?: number;
+  title: string;
+  promotionText?: string;
+  role: string[];
+  characteristic?: string;
+  requiredSkills?: string[];
+  capacity: number;
+  recruitmentStartDate: string;
+  recruitmentEndDate: string;
+};
+
+export async function createTeamRecruitment(payload: TeamRequestPayload) {
+  const accessToken = await getAccessToken();
+
+  if (!accessToken) {
+    throw new Error('로그인이 필요합니다.');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/teams`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const text = await response.text();
+  const result: ApiResponse<TeamDetail> | null = text ? JSON.parse(text) : null;
+
+  if (!response.ok || !result?.success) {
+    throw new Error(result?.message || `팀 모집글 등록 실패: ${response.status}`);
+  }
+
+  return result.data;
+}
+

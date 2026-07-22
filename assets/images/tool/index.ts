@@ -8,3 +8,6 @@ export { default as MypageMLogo } from './mypageMLogo.svg';
 export { default as Lock } from './lock.svg';
 export { default as Bookmark } from './bookmark.svg';
 export { default as BookmarkFilled } from './bookmark_filled.svg';
+export { default as Point } from './point.svg';
+export { default as DateIcon } from './date.svg';
+export { default as Alarm } from './alarm.svg';

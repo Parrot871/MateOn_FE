@@ -1,11 +1,12 @@
 // src/app/bookMark.tsx
-import { EventCard, type ActivityItem } from '@/components/ui/EventCard';
+import type { EventItem } from '@/api/events';
+import { EventCard } from '@/components/ui/EventCard';
 import { Back } from '@/assets/images/tool';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
-const BOOKMARKED_ITEMS: ActivityItem[] = [];
+const BOOKMARKED_ITEMS: EventItem[] = [];
 
 export default function BookmarkScreen() {
   const router = useRouter();

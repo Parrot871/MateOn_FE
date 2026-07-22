@@ -1,5 +1,6 @@
+import type { EventItem } from '@/api/events';
 import { MypageMLogo, NotificationNewDot } from '@/assets/images/tool';
-import { EventCard, type ActivityItem } from '@/components/ui/EventCard';
+import { EventCard } from '@/components/ui/EventCard';
 import TeamRecommendationCard from '@/components/ui/TeamRecommendationCard';
 import { useTeamRecStore } from '@/store/teamRecStore';
 import { Image } from 'expo-image';
@@ -28,16 +29,24 @@ const BANNERS = [
   { id: 'banner-2', image: require('@/assets/images/banner_activity.png'), path: '/activity' },
 ];
 
-const DUMMY_EVENTS: ActivityItem[] = [
+const DUMMY_EVENTS: EventItem[] = [
   {
-    id: '1',
-    dDay: 'D-7',
+    id: 1,
     title: '2026 창업경진대회',
-    type: '공모전',
-    field: 'IT/개발',
-    synergy: 85,
+    category: 'CONTEST',
+    field: 'SCIENCE_ENGINEERING_TECH_IT',
+    fieldLabel: 'IT/개발',
     organizer: '중소벤처기업부',
-    prize: '1000만원',
+    description: null,
+    summarizedDescription: null,
+    detailUrl: '',
+    imageUrl: null,
+    campusScope: 'ALL',
+    startDate: '2026-07-01',
+    endDate: '2026-07-30',
+    recommendedTargets: null,
+    targetColleges: null,
+    targetSchool: null,
   },
 ];
 
@@ -63,7 +72,7 @@ export default function HomeScreen() {
             <Image source={MypageMLogo} style={{ width: 32, height: 32 }} contentFit="contain" />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => router.push('/notification')}>
-            <Image source={NotificationNewDot} style={{ width: 32, height: 32 }} contentFit="contain" />
+            <Image source={NotificationNewDot} style={{ width: 30, height: 30 }} contentFit="contain" />
           </TouchableOpacity>
         </View>
 
@@ -94,16 +103,16 @@ export default function HomeScreen() {
         </View>
 
         <View className="mb-8">
-          <Text className="text-black text-lg font-pretendard-bold mb-3">맞춤 공모전 추천</Text>
+          <Text className="text-black text-xl font-pretendard-bold mb-3">맞춤 공모전 추천</Text>
           <View className="gap-3">
             {DUMMY_EVENTS.map((event) => (
-              <EventCard key={event.id} item={event} onPress={(id) => router.push(`/activity/${id}`)} />
+              <EventCard key={event.id} item={event} />
             ))}
           </View>
         </View>
 
         <View className="mb-8">
-          <Text className="text-black text-lg font-pretendard-bold mb-3">맞춤 팀 추천</Text>
+          <Text className="text-black text-xl font-pretendard-bold mb-3">맞춤 팀 추천</Text>
 
           {(teamRec.status === 'idle' || teamRec.status === 'loading') && (
             <View className="items-center justify-center py-10">

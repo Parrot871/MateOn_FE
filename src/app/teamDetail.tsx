@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
@@ -17,6 +18,7 @@ import {
   ProposalNotFoundError,
 } from '@/api/apply';
 import { getTeamDetail, type TeamDetail } from '@/api/team';
+import { Back } from '@/assets/images/tool';
 
 type State =
   | { status: 'loading' }
@@ -64,19 +66,12 @@ export default function TeamDetailScreen() {
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
       {/* 상단 헤더 */}
-      <View className="flex-row items-center justify-between px-5 py-3 border-b border-gray-100">
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="w-10 h-10 items-start justify-center -ml-2"
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <Text className="text-2xl text-gray-800">‹</Text>
+      <View className="flex-row items-center justify-between px-6 pt-2 pb-2 border-b border-gray-100">
+        <TouchableOpacity onPress={() => router.back()}>
+          <Image source={Back} style={{ width: 26, height: 26 }} contentFit="contain" />
         </TouchableOpacity>
-        <Text className="text-lg font-pretendard-bold text-gray-900">
-          팀 정보
-        </Text>
-        {/* 우측 대칭을 위한 빈 영역 */}
-        <View className="w-10" />
+        <Text className="text-black text-2xl font-pretendard-bold">팀 상세정보</Text>
+        <View style={{ width: 26, height: 26 }} />
       </View>
 
       {state.status === 'loading' && (
