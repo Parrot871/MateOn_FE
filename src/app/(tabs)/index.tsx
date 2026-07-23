@@ -1,10 +1,12 @@
+import { getTeams, type TeamSummary } from '@/api/team';
 import { MypageMLogo, NotificationNewDot } from '@/assets/images/tool';
 import { EventCard, type ActivityItem } from '@/components/ui/EventCard';
+import { MyTeamCard } from '@/components/ui/MyTeamCard';
 import TeamRecommendationCard from '@/components/ui/TeamRecommendationCard';
 import { useTeamRecStore } from '@/store/teamRecStore';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -41,15 +43,50 @@ const DUMMY_EVENTS: ActivityItem[] = [
   },
 ];
 
+type MyTeamState =
+  | { status: 'loading' }
+  | { status: 'empty' }
+  | { status: 'error'; message: string }
+  | { status: 'ready'; teams: TeamSummary[] };
+
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { teamRec, fetchTeamRec, hasHydrated } = useTeamRecStore();
 
+  const [myTeams, setMyTeams] = useState<MyTeamState>({ status: 'loading' });
+
   useEffect(() => {
     if (!hasHydrated) return;
     fetchTeamRec();
   }, [hasHydrated, fetchTeamRec]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const load = async () => {
+      setMyTeams({ status: 'loading' });
+      try {
+        const teams = await getTeams({ myPosts: true });
+        if (!isMounted) return;
+        setMyTeams(
+          teams.length > 0 ? { status: 'ready', teams } : { status: 'empty' }
+        );
+      } catch (err) {
+        if (!isMounted) return;
+        setMyTeams({
+          status: 'error',
+          message: err instanceof Error ? err.message : '내 팀을 불러오지 못했어요.',
+        });
+      }
+    };
+
+    load();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <View className="flex-1 bg-white">
@@ -58,6 +95,7 @@ export default function HomeScreen() {
         contentContainerClassName="px-5"
         contentContainerStyle={{ paddingBottom: 90 + insets.bottom }}
       >
+        {/* 헤더 영역 */}
         <View className="flex-row justify-between items-center pt-20 pb-6">
           <TouchableOpacity onPress={() => router.push('/')}>
             <Image source={MypageMLogo} style={{ width: 32, height: 32 }} contentFit="contain" />
@@ -67,6 +105,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* 배너 캐러셀 */}
         <View className="mb-8" style={{ height: BANNER_HEIGHT }}>
           <Carousel
             width={BANNER_WIDTH}
@@ -93,6 +132,7 @@ export default function HomeScreen() {
           />
         </View>
 
+        {/* 맞춤 공모전 추천 */}
         <View className="mb-8">
           <Text className="text-black text-lg font-pretendard-bold mb-3">맞춤 공모전 추천</Text>
           <View className="gap-3">
@@ -102,6 +142,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {/* 맞춤 팀 추천 (가로 스크롤) */}
         <View className="mb-8">
           <Text className="text-black text-lg font-pretendard-bold mb-3">맞춤 팀 추천</Text>
 
@@ -141,6 +182,72 @@ export default function HomeScreen() {
                   onPress={() => router.push({ pathname: '/teamDetail', params: { teamId: team.teamId } })}
                 />
               ))}
+            </ScrollView>
+          )}
+        </View>
+
+        {/* 내 팀 현황 (가로 스크롤) */}
+        <View className="mb-8">
+          <View className="flex-row justify-between items-center mb-3">
+            <Text className="text-black text-lg font-pretendard-bold">내 팀 현황</Text>
+            <TouchableOpacity onPress={() => router.push('/recruiting')}>
+              <Text className="text-gray-400 text-sm font-pretendard-medium">전체보기</Text>
+            </TouchableOpacity>
+          </View>
+
+          {myTeams.status === 'loading' && (
+            <View className="items-center justify-center py-10">
+              <ActivityIndicator />
+            </View>
+          )}
+
+          {myTeams.status === 'empty' && (
+            <View className="bg-gray-50 rounded-2xl p-5 items-center">
+              <Text className="text-gray-500">아직 참여 중인 팀이 없어요.</Text>
+            </View>
+          )}
+
+          {myTeams.status === 'error' && (
+            <View className="bg-gray-50 rounded-2xl p-5 items-center">
+              <Text className="text-gray-500 mb-2">{myTeams.message}</Text>
+            </View>
+          )}
+
+          {myTeams.status === 'ready' && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              decelerationRate="fast"
+              snapToInterval={CARD_WIDTH + CARD_GAP}
+              snapToAlignment="start"
+              contentContainerStyle={{ paddingRight: 20, gap: CARD_GAP, paddingVertical: 4 }}
+              style={{ marginHorizontal: -20, paddingLeft: 20 }}
+            >
+              {myTeams.teams
+                .slice()
+                .sort((a, b) => {
+                  if (a.isRecruiting !== b.isRecruiting) {
+                    return a.isRecruiting ? -1 : 1;
+                  }
+                  return (
+                    new Date(a.recruitmentEndDate).getTime() -
+                    new Date(b.recruitmentEndDate).getTime()
+                  );
+                })
+                .slice(0, 3)
+                .map((team) => (
+                  <View key={team.id} style={{ width: CARD_WIDTH }}>
+                    <MyTeamCard
+                      team={team}
+                      onPress={() =>
+                        router.push({
+                          pathname: '/teamDetail',
+                          params: { teamId: team.id },
+                        })
+                      }
+                    />
+                  </View>
+                ))}
             </ScrollView>
           )}
         </View>
