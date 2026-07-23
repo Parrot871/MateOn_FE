@@ -1,3 +1,4 @@
+import { getMyApplications } from '@/api/apply';
 import { clearTokens } from '@/api/tokenStorage';
 import { getMyProfile, type UserProfile } from '@/api/user';
 import { Back, Bookmark, Flag, MypageMLogo, NotificationNewDot, UserIcon } from '@/assets/images/tool';
@@ -55,16 +56,11 @@ function CircleProgress({
   );
 }
 
-const ACTIVITIES = [
-  { label: '지원한 팀', count: 2, icon: Flag, path: null },
-  { label: '모집한 팀', count: 2, icon: Flag, path: '/myteamLeader' },
-  { label: '팀원 평가', count: 2, icon: Bookmark, path: '/bookMark' },
-] as const;
-
 export default function MypageScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [applicationCount, setApplicationCount] = useState(0);
   const univ = getUnivByEmail(profile?.email);
 
   useFocusEffect(
@@ -72,8 +68,18 @@ export default function MypageScreen() {
       getMyProfile()
         .then(setProfile)
         .catch((error) => console.error('내 정보 조회 실패:', error));
+
+      getMyApplications()
+        .then((data) => setApplicationCount(data.length))
+        .catch((error) => console.error('지원서 목록 조회 실패:', error));
     }, [])
   );
+
+  const ACTIVITIES = [
+  { label: '지원 및 제안', count: applicationCount, icon: Flag, path: '/myApplications' },
+  { label: '모집한 팀', count: 2, icon: Flag, path: '/myteamLeader' },
+  { label: '팀원 평가', count: 2, icon: Bookmark, path: '/bookMark' },
+] as const;
 
   const SETTINGS = [
     { label: '학교 인증', onPress: () => {} },
