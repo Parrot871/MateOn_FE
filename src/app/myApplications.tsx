@@ -1,4 +1,3 @@
-
 import {
   getMyApplications,
   getReceivedOffers,
