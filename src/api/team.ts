@@ -90,6 +90,151 @@ export async function getRecommendedTeams(params?: GetRecommendedTeamsParams) {
   return result.data;
 }
 
+// 역제안: 팀 맞춤 유저 추천(team-to-user)
+export type UserRecommendation = {
+  userId: number;
+  name: string;
+  school: string;
+  major: string;
+  grade: string;
+  tagline: string;
+  desiredRoles: string[];
+  skills: string[];
+  experienceLevel: string;
+  activityStyle: string;
+  collaborationTemperature: number | null; // 표본 부족 시 null (비공개, 결측 아님)
+  score: number;
+  label: string;
+};
+ 
+type GetRecommendedUsersParams = {
+  teamId: number;
+  limit?: number;
+};
+ 
+// 이 API의 예외 응답들을 구분해서 처리하기 위한 전용 에러
+export class TeamEmbeddingNotReadyError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'TeamEmbeddingNotReadyError';
+  }
+}
+ 
+export class ForbiddenAccessError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ForbiddenAccessError';
+  }
+}
+ 
+export class AiServerError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AiServerError'; // 502 AI_SERVER_ERROR, 503 AI_SERVER_UNAVAILABLE 공통
+  }
+}
+
+// 404 RECOMMENDATION_NOT_FOUND — 최근 추천 결과에 해당 (teamId, userId) 조합이 없는 경우
+export class RecommendationNotFoundError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'RecommendationNotFoundError';
+  }
+}
+ 
+// 팀장이 자기 팀 기준으로 적합한 유저를 추천받아 제안(offer)을 보낼 때 사용
+export async function getRecommendedUsers(params: GetRecommendedUsersParams) {
+  const accessToken = await getAccessToken();
+ 
+  if (!accessToken) {
+    throw new Error('로그인이 필요합니다.');
+  }
+ 
+  const query = new URLSearchParams();
+  query.set('teamId', String(params.teamId));
+  if (params.limit !== undefined) query.set('limit', String(params.limit));
+ 
+  const response = await fetch(
+    `${API_BASE_URL}/api/matching/recommendations/team-to-user?${query.toString()}`,
+    {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }
+  );
+ 
+  const text = await response.text();
+  const result: ApiResponse<UserRecommendation[]> | null = text ? JSON.parse(text) : null;
+ 
+  if (!response.ok || !result?.success) {
+    const message = result?.message || `유저 추천 조회 실패: ${response.status}`;
+ 
+    if (response.status === 400 && message.includes('TEAM_EMBEDDING_NOT_READY')) {
+      throw new TeamEmbeddingNotReadyError(message);
+    }
+    if (response.status === 403 && message.includes('FORBIDDEN_ACCESS')) {
+      throw new ForbiddenAccessError(message);
+    }
+    if (response.status === 404) {
+      throw new Error(message); // RESOURCE_NOT_FOUND — 팀이 존재하지 않음
+    }
+    if (response.status === 502 || response.status === 503) {
+      throw new AiServerError(message);
+    }
+ 
+    throw new Error(message);
+  }
+ 
+  return result.data;
+}
+
+type GetUserRecommendationReasonParams = {
+  teamId: number;
+  userId: number;
+};
+
+// 팀장이 추천받은 특정 유저에 대한 상세 추천 이유를 조회할 때 사용
+export async function getUserRecommendationReason(
+  params: GetUserRecommendationReasonParams
+): Promise<string> {
+  const accessToken = await getAccessToken();
+
+  if (!accessToken) {
+    throw new Error('로그인이 필요합니다.');
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/matching/recommendations/reason/team-to-user`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ teamId: params.teamId, userId: params.userId }),
+    }
+  );
+
+  const text = await response.text();
+  const result: ApiResponse<{ reason: string }> | null = text ? JSON.parse(text) : null;
+
+  if (!response.ok || !result?.success) {
+    const message = result?.message || `추천 상세 이유 조회 실패: ${response.status}`;
+
+    if (response.status === 403 && message.includes('FORBIDDEN_ACCESS')) {
+      throw new ForbiddenAccessError(message);
+    }
+    if (response.status === 404 && message.includes('RECOMMENDATION_NOT_FOUND')) {
+      throw new RecommendationNotFoundError(message);
+    }
+    if (response.status === 502 || response.status === 503) {
+      throw new AiServerError(message);
+    }
+
+    throw new Error(message);
+  }
+
+  return result.data.reason;
+}
+
 export async function getTeamDetail(teamId: number) {
   const accessToken = await getAccessToken();
 
