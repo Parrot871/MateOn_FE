@@ -111,6 +111,47 @@ export async function getTeamDetail(teamId: number) {
   return result.data;
 }
 
+export type TeamPost = {
+  id: number;
+  title: string;
+  role: string[];
+  requiredSkills: string[];
+  promotionText: string;
+  characteristic: string;
+  capacity: number;
+  currentMemberCount: number;
+  eventId: number | null;
+  connectedActivityTitle: string | null;
+  recruiting: boolean;
+  recruitmentStartDate: string;
+  recruitmentEndDate: string;
+};
+
+// 내가 리더로 모집한(작성한) 팀 목록 — myPosts=true로 리더 소유 게시글만 필터링
+export async function getMyTeams(signal?: AbortSignal): Promise<TeamPost[]> {
+  const accessToken = await getAccessToken();
+
+  if (!accessToken) {
+    throw new Error('로그인이 필요합니다.');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/teams?myPosts=true`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    signal,
+  });
+
+  const text = await response.text();
+  const result: ApiResponse<TeamPost[]> | null = text ? JSON.parse(text) : null;
+
+  if (!response.ok || !result?.success) {
+    throw new Error(result?.message || `모집한 팀 조회 실패: ${response.status}`);
+  }
+
+  console.log('[getMyTeams]', text);
+
+  return result.data;
+}
+
 export type TeamRequestPayload = {
   eventId?: number;
   title: string;
@@ -147,5 +188,73 @@ export async function createTeamRecruitment(payload: TeamRequestPayload) {
   }
 
   return result.data;
+}
+
+export type TeamReviewTarget = {
+  userId: number;
+  name: string;
+  major: string;
+  alreadyReviewed: boolean;
+};
+
+export type TeamReviewTargets = {
+  teamId: number;
+  teamTitle: string;
+  endedAt: string;
+  reviewDeadline: string;
+  targets: TeamReviewTarget[];
+};
+
+// 팀이 아직 종료되지 않았거나 접근 권한이 없으면 실패하므로, 호출부에서
+// 성공(success: true) 여부로 "평가 가능한 종료된 팀"인지 판단한다.
+export async function getTeamReviewTargets(teamId: number, signal?: AbortSignal): Promise<TeamReviewTargets> {
+  const accessToken = await getAccessToken();
+
+  if (!accessToken) {
+    throw new Error('로그인이 필요합니다.');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/teams/${teamId}/reviews/targets`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    signal,
+  });
+
+  const text = await response.text();
+  const result: ApiResponse<TeamReviewTargets> | null = text ? JSON.parse(text) : null;
+
+  if (!response.ok || !result?.success) {
+    throw new Error(result?.message || `평가 대상 조회 실패: ${response.status}`);
+  }
+
+  return result.data;
+}
+
+export type TeamReviewSubmission = {
+  revieweeId: number;
+  rating: number;
+};
+
+export async function submitTeamReviews(teamId: number, reviews: TeamReviewSubmission[]): Promise<void> {
+  const accessToken = await getAccessToken();
+
+  if (!accessToken) {
+    throw new Error('로그인이 필요합니다.');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/teams/${teamId}/reviews`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ reviews }),
+  });
+
+  const text = await response.text();
+  const result: ApiResponse<null> | null = text ? JSON.parse(text) : null;
+
+  if (!response.ok || !result?.success) {
+    throw new Error(result?.message || `평가 제출 실패: ${response.status}`);
+  }
 }
 

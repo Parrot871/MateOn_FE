@@ -53,6 +53,7 @@ type SignUpPayload = {
   provider: 'LOCAL' | 'KAKAO';
   providerId: string | null;
   schoolEmail: string | null;
+  school?: string;
   name: string;
   college: string;
   major: string;

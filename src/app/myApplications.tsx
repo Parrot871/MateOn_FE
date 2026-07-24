@@ -168,7 +168,7 @@ export default function MyApplicationsScreen() {
                 style={{ borderBottomWidth: 2, borderBottomColor: isActive ? '#3E6AF4' : 'transparent' }}
               >
                 <Text
-                  className={`text-base ${
+                  className={`text-lg ${
                     isActive ? 'text-[#3E6AF4] font-pretendard-bold' : 'text-gray-400 font-pretendard-medium'
                   }`}
                 >
@@ -210,19 +210,19 @@ export default function MyApplicationsScreen() {
           )}
 
           {applications !== null && applications.length === 0 && (
-            <View className="py-20 items-center justify-center bg-white rounded-3xl p-8 border border-gray-100">
+            <View className="pt-20 py-10 items-center justify-center bg-white rounded-3xl p-8 border border-gray-100">
               <View className="w-12 h-12 rounded-2xl bg-gray-50 border border-gray-100 justify-center items-center mb-3">
                 <Text className="text-xl">📄</Text>
               </View>
-              <Text className="text-gray-900 font-pretendard-bold text-base mb-1">아직 지원한 팀이 없어요</Text>
-              <Text className="text-gray-400 font-pretendard text-xs text-center mb-5">
+              <Text className="text-gray-900 font-pretendard-bold text-lg mb-1">아직 지원한 팀이 없어요</Text>
+              <Text className="text-gray-400 font-pretendard text-sm text-center mb-5">
                 관심 있는 공모전이나 팀에 지원서를 제출해보세요.
               </Text>
               <TouchableOpacity
                 onPress={() => router.push('/')}
                 className="bg-blue-600 px-4 py-2.5 rounded-xl active:opacity-90"
               >
-                <Text className="text-white font-pretendard-semibold text-xs">팀 탐색하러 가기</Text>
+                <Text className="text-white font-pretendard-semibold text-sm">팀 탐색하러 가기</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -305,8 +305,8 @@ export default function MyApplicationsScreen() {
               <View className="w-12 h-12 rounded-2xl bg-gray-50 border border-gray-100 justify-center items-center mb-3">
                 <Text className="text-xl">📬</Text>
               </View>
-              <Text className="text-gray-900 font-pretendard-bold text-base mb-1">아직 받은 제안이 없어요</Text>
-              <Text className="text-gray-400 font-pretendard text-xs text-center">
+              <Text className="text-gray-900 font-pretendard-bold text-lg mb-1">아직 받은 제안이 없어요</Text>
+              <Text className="text-gray-400 font-pretendard text-sm text-center">
                 팀장이 먼저 제안을 보내면 여기에 표시돼요.
               </Text>
             </View>

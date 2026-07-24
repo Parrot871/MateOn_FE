@@ -1,7 +1,7 @@
 import { getMyApplications } from '@/api/apply';
 import { clearTokens } from '@/api/tokenStorage';
 import { getMyProfile, type UserProfile } from '@/api/user';
-import { Back, Bookmark, Flag, MypageMLogo, NotificationNewDot, UserIcon } from '@/assets/images/tool';
+import { Back, FlagIcon, MypageMLogo, NotificationNewDot, ProfileUser, Star, UserIcon } from '@/assets/images/tool';
 import { useTeamRecStore } from '@/store/teamRecStore';
 import { getUnivByEmail } from '@/utils/univ';
 import { Image } from 'expo-image';
@@ -76,9 +76,9 @@ export default function MypageScreen() {
   );
 
   const ACTIVITIES = [
-  { label: '지원 및 제안', count: applicationCount, icon: Flag, path: '/myApplications' },
-  { label: '모집한 팀', count: 2, icon: Flag, path: '/myteamLeader' },
-  { label: '팀원 평가', count: 2, icon: Bookmark, path: '/bookMark' },
+  { label: '지원 및 제안', count: applicationCount, icon: UserIcon, path: '/myApplications' },
+  { label: '모집한 팀', count: 2, icon: FlagIcon, path: '/myteamLeader' },
+  { label: '팀원 평가', count: 2, icon: Star, path: '/teamReview' },
 ] as const;
 
   const SETTINGS = [
@@ -113,14 +113,20 @@ export default function MypageScreen() {
           <Image source={MypageMLogo} style={{ width: 32, height: 32 }} contentFit="contain" />
         </TouchableOpacity>
 
-        <Image source={NotificationNewDot} style={{ width: 30, height: 30 }} contentFit="contain" />
+        <TouchableOpacity onPress={() => router.push('/notification')}>
+          <Image source={NotificationNewDot} style={{ width: 30, height: 30 }} contentFit="contain" />
+        </TouchableOpacity>
       </View>
 
       <View className="flex-row items-center mb-6">
         <View className="w-20 h-20 rounded-full bg-gray-100 items-center justify-center">
-          <Image source={UserIcon} style={{ width: 40, height: 40 }} contentFit="contain" />
+          <Image source={ProfileUser} style={{ width: 40, height: 40 }} contentFit="contain" />
           <View className="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full bg-white border border-gray-300 items-center justify-center">
-            <View className="w-2.5 h-2.5 rounded-full bg-gray-400" />
+            <Image
+              source={require('@/assets/images/tool/cmr.png')}
+              style={{ width: 10, height: 10 }}
+              contentFit="contain"
+            />
           </View>
         </View>
 
@@ -168,7 +174,7 @@ export default function MypageScreen() {
           >
             <Image source={activity.icon} style={{ width: 22, height: 22 }} contentFit="contain" />
             <Text className="text-black font-pretendard-semibold mt-2 text-base">{activity.label}</Text>
-            <Text className="text-black font-pretendard text-lg mt-0.5">{activity.count}개</Text>
+            <Text className="text-black font-pretendard text-lg mt-0.5">{activity.count}건</Text>
           </TouchableOpacity>
         ))}
       </View>

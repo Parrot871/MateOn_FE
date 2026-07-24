@@ -1,9 +1,8 @@
 export { default as Back } from './back.svg';
 export { default as Check } from './check.svg';
 export { default as X } from './x.svg';
-export { default as Flag } from './flag.svg';
 export { default as NotificationNewDot } from './notification_newdot.svg';
-export { default as UserIcon } from './user.svg';
+export { default as UserIcon } from './humanicon.svg';
 export { default as MypageMLogo } from './mypageMLogo.svg';
 export { default as Lock } from './lock.svg';
 export { default as Bookmark } from './bookmark.svg';
@@ -11,3 +10,7 @@ export { default as BookmarkFilled } from './bookmark_filled.svg';
 export { default as Point } from './point.svg';
 export { default as DateIcon } from './date.svg';
 export { default as Alarm } from './alarm.svg';
+export { default as Star } from './staricon.svg';
+export { default as FilledStar } from './filledStar.svg';
+export { default as FlagIcon } from './flagicon.svg';
+export { default as ProfileUser } from './user.svg';

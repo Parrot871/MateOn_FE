@@ -2,6 +2,7 @@
 import { signUp } from '@/api/auth';
 import { PdfImg } from '@/assets/images/login';
 import { Back } from '@/assets/images/tool';
+import { getUnivByEmail } from '@/utils/univ';
 import * as DocumentPicker from 'expo-document-picker';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -68,6 +69,7 @@ export default function MyInfoScreen() {
 
     const isKakaoFlow = provider === 'KAKAO';
     const isLocalFlow = !!(email && password && passwordConfirm && verificationToken);
+    const school = getUnivByEmail(email) ?? undefined;
 
     if (isKakaoFlow || isLocalFlow) {
       setIsSubmitting(true);
@@ -79,6 +81,7 @@ export default function MyInfoScreen() {
                 provider: 'KAKAO',
                 providerId: null,
                 schoolEmail: null,
+                school,
                 name,
                 college: track!,
                 major,
@@ -95,6 +98,7 @@ export default function MyInfoScreen() {
                 provider: 'LOCAL',
                 providerId: null,
                 schoolEmail: null,
+                school,
                 name,
                 college: track!,
                 major,

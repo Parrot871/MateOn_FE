@@ -173,8 +173,8 @@ function TeamDetailContent({
         <View className="flex-row items-center mb-6 bg-gray-50 p-3.5 rounded-2xl">
           <Avatar />
           <View className="ml-3.5 flex-1">
-            <View className="flex-row items-center gap-1.5">
-              <Text className="text-gray-900 text-base font-pretendard-bold">
+            <View className="flex-row items-center gap-1.5 ml-1">
+              <Text className="text-gray-900 text-lg font-pretendard-bold">
                 {data.leaderName}
               </Text>
               <View className="bg-indigo-100 px-2 py-0.5 rounded">
@@ -183,7 +183,7 @@ function TeamDetailContent({
                 </Text>
               </View>
             </View>
-            <Text className="text-gray-500 text-xs mt-1">
+            <Text className="text-gray-500 text-base mt-1">
               {data.leaderCollege} · {data.leaderMajor}
             </Text>
           </View>
@@ -223,17 +223,17 @@ function TeamDetailContent({
 
         {/* 팀 소개 */}
         <View className="mb-7">
-          <Text className="text-gray-900 text-base font-pretendard-bold mb-2.5">
+          <Text className="text-gray-900 text-lg font-pretendard-bold mb-2.5">
             팀 소개
           </Text>
-          <Text className="text-gray-700 text-sm leading-6 font-pretendard-regular">
+          <Text className="text-gray-700 text-base leading-6 font-pretendard-regular">
             {data.promotionText}
           </Text>
         </View>
 
         {/* 모집 역할 */}
         <View className="mb-7">
-          <Text className="text-gray-900 text-base font-pretendard-bold mb-3">
+          <Text className="text-gray-900 text-lg font-pretendard-bold mb-3">
             모집 역할
           </Text>
           <View className="flex-row flex-wrap gap-2">
@@ -250,7 +250,7 @@ function TeamDetailContent({
         {/* 요구 기술 */}
         {data.requiredSkills.length > 0 && (
           <View className="mb-7">
-            <Text className="text-gray-900 text-base font-pretendard-bold mb-3">
+            <Text className="text-gray-900 text-lg font-pretendard-bold mb-3">
               요구 기술
             </Text>
             <View className="flex-row flex-wrap gap-2">
@@ -268,7 +268,7 @@ function TeamDetailContent({
         {/* 팀원 현황 */}
         <View className="border-t border-gray-100 pt-6">
           <View className="flex-row items-center justify-between mb-4">
-            <Text className="text-gray-900 text-base font-pretendard-bold">
+            <Text className="text-gray-900 text-lg font-pretendard-bold">
               팀원 현황 <Text className="text-indigo-600">{data.currentMemberCount}</Text>/{data.capacity}
             </Text>
             <View
@@ -281,8 +281,8 @@ function TeamDetailContent({
               <Text
                 className={
                   data.recruiting
-                    ? 'text-emerald-600 text-xs font-pretendard-bold'
-                    : 'text-gray-400 text-xs font-pretendard-bold'
+                    ? 'text-emerald-600 text-sm font-pretendard-bold'
+                    : 'text-gray-400 text-sm font-pretendard-bold'
                 }
               >
                 {data.recruiting ? '모집 중' : '모집 마감'}
@@ -294,15 +294,15 @@ function TeamDetailContent({
           <View className="flex-row items-center py-2">
             <Avatar />
             <View className="ml-3 flex-1">
-              <Text className="text-gray-900 text-sm font-pretendard-bold">
+              <Text className="text-gray-900 text-lg font-pretendard-bold">
                 {data.leaderName}
               </Text>
-              <Text className="text-gray-400 text-xs mt-0.5">
+              <Text className="text-gray-400 text-sm mt-0.5">
                 {data.leaderCollege} · {data.leaderMajor}
               </Text>
             </View>
             <View className="bg-gray-100 rounded-lg px-2.5 py-1">
-              <Text className="text-gray-600 text-xs font-pretendard-medium">
+              <Text className="text-gray-600 text-sm font-pretendard-medium">
                 팀장
               </Text>
             </View>
@@ -311,7 +311,7 @@ function TeamDetailContent({
           {/* 그 외 팀원 */}
           {additionalMembers > 0 && (
             <View className="mt-2 bg-gray-50 rounded-xl p-3 items-center">
-              <Text className="text-gray-500 text-xs font-pretendard-medium">
+              <Text className="text-gray-500 text-sm font-pretendard-medium">
                 외 팀원 {additionalMembers}명이 참여 중이에요
               </Text>
             </View>
