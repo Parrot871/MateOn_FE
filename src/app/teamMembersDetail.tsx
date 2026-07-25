@@ -1,3 +1,4 @@
+import { createOrGetDmRoom } from '@/api/chat';
 import {
   AiServerError,
   ForbiddenAccessError,
@@ -8,7 +9,7 @@ import { Back } from '@/assets/images/tool';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 function Chip({ label }: { label: string }) {
@@ -58,15 +59,18 @@ export default function TeamMembersDetailScreen() {
   const scorePercent = scoreNumber !== null ? Math.round(scoreNumber * 100) : null;
   const metaLine = [params.school, params.major, params.grade].filter(Boolean).join(' · ');
 
+  const teamId = Number(params.teamId);
+  const userId = Number(params.userId);
+
   const [detailReason, setDetailReason] = useState<string | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
 
+  // 1:1 대화하기
+  const [dmLoading, setDmLoading] = useState(false);
+
   useEffect(() => {
     if (!params.teamId || !params.userId) return;
-
-    const teamId = Number(params.teamId);
-    const userId = Number(params.userId);
 
     if (Number.isNaN(teamId) || Number.isNaN(userId)) {
       setDetailError('잘못된 요청이에요.');
@@ -104,6 +108,36 @@ export default function TeamMembersDetailScreen() {
     };
   }, [params.teamId, params.userId]);
 
+  const handleChat = async () => {
+  if (Number.isNaN(userId) || dmLoading) return;
+
+  setDmLoading(true);
+  try {
+    const room = await createOrGetDmRoom(userId);
+    router.push({
+      pathname: '/chatDetail',
+      params: { roomId: String(room.roomId), title: params.name },
+    });
+  } catch (error) {
+    Alert.alert('오류', '대화방을 여는 데 실패했어요. 잠시 후 다시 시도해주세요.');
+  } finally {
+    setDmLoading(false);
+  }
+};
+
+  const handlePropose = () => {
+    if (Number.isNaN(teamId) || Number.isNaN(userId)) return;
+
+    router.push({
+      pathname: '/teamProposal', 
+      params: {
+        teamId: String(teamId),
+        userId: String(userId),
+        name: params.name,
+      },
+    });
+  };
+
   return (
     <View className="flex-1 bg-gray-50/60">
       <View className="bg-white border-b border-gray-200">
@@ -127,7 +161,7 @@ export default function TeamMembersDetailScreen() {
       <ScrollView
         className="flex-1"
         contentContainerClassName="p-5"
-        contentContainerStyle={{ paddingBottom: 40 + insets.bottom }}
+        contentContainerStyle={{ paddingBottom: 120 + insets.bottom }}
         showsVerticalScrollIndicator={false}
       >
         {/* 기본 정보 카드 */}
@@ -197,6 +231,31 @@ export default function TeamMembersDetailScreen() {
           ) : null}
         </View>
       </ScrollView>
+
+      {/* 하단 액션 버튼 */}
+      <View
+        className="flex-row bg-white border-t border-gray-100 px-5 pt-3"
+        style={{ paddingBottom: Math.max(insets.bottom, 12) }}
+      >
+        <TouchableOpacity
+          onPress={handleChat}
+          disabled={dmLoading}
+          className="flex-1 mr-2 border border-blue-200 rounded-2xl py-3.5 items-center justify-center"
+        >
+          {dmLoading ? (
+            <ActivityIndicator color="#2563eb" size="small" />
+          ) : (
+            <Text className="text-blue-600 font-pretendard-bold text-sm">1대1 대화하기</Text>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={handlePropose}
+          className="flex-1 ml-2 bg-blue-600 rounded-2xl py-3.5 items-center justify-center"
+        >
+          <Text className="text-white font-pretendard-bold text-sm">제안하기</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }

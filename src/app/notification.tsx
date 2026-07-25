@@ -1,5 +1,3 @@
-
-
 // app/notification/index.tsx
 import { UserAddFill } from '@/assets/icons';
 import { X } from '@/assets/images/tool';

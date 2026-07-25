@@ -1,9 +1,38 @@
-// src/api/chat.ts
 import type { ChatRoom, StompChatMessage } from '@/types/chat';
 import { getAccessToken } from './tokenStorage';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
+// 1. DM 방 조회 및 생성
+export type DmRoom = {
+  roomId: number;
+};
+
+export async function createOrGetDmRoom(
+  targetUserId: number,
+  signal?: AbortSignal
+): Promise<DmRoom> {
+  const accessToken = await getAccessToken();
+
+  const response = await fetch(`${API_BASE_URL}/api/chat/rooms/dm`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ targetUserId }),
+    signal,
+  });
+
+  if (!response.ok) {
+    throw new Error(`DM 방 조회/생성 실패: ${response.status}`);
+  }
+
+  const result = await response.json();
+  return result.data;
+}
+
+// 2. 채팅방 목록 조회
 export async function fetchChatRooms(signal?: AbortSignal): Promise<ChatRoom[]> {
   const accessToken = await getAccessToken();
 
@@ -20,6 +49,7 @@ export async function fetchChatRooms(signal?: AbortSignal): Promise<ChatRoom[]> 
   return result.data;
 }
 
+// 3. 채팅방 메시지 이력 조회
 export async function fetchChatMessages(
   roomId: number,
   options?: { before?: number; size?: number },
@@ -53,11 +83,7 @@ export async function fetchChatMessages(
   return result.data;
 }
 
-/**
- * 채팅방 읽음 처리.
- * 실패해도 채팅 화면 자체를 막으면 안 되는 로직이라 throw 대신
- * boolean을 반환한다. 호출부에서 실패 시 재시도 큐에 넣는 등 유연하게 처리.
- */
+// 4. 채팅방 메시지 읽음 처리
 export async function markChatAsRead(
   roomId: number,
   lastReadMessageId: number,

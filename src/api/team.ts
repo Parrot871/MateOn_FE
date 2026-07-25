@@ -403,3 +403,244 @@ export async function submitTeamReviews(teamId: number, reviews: TeamReviewSubmi
   }
 }
 
+export type ProposalDraft = {
+  direction: 'TEAM_TO_USER' | 'USER_TO_TEAM';
+  userId: number;
+  message: string;
+};
+
+type GetTeamToUserProposalDraftParams = {
+  teamId: number;
+  userId: number;
+};
+
+// 팀장이 추천받은 유저에게 보낼 제안 메시지 초안을 AI로 생성할 때 사용
+export async function getTeamToUserProposalDraft(
+  params: GetTeamToUserProposalDraftParams
+): Promise<ProposalDraft> {
+  const accessToken = await getAccessToken();
+
+  if (!accessToken) {
+    throw new Error('로그인이 필요합니다.');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/matching/proposals/team-to-user`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ teamId: params.teamId, userId: params.userId }),
+  });
+
+  const text = await response.text();
+  const result: ApiResponse<ProposalDraft> | null = text ? JSON.parse(text) : null;
+
+  if (!response.ok || !result?.success) {
+    const message = result?.message || `제안 문구 초안 조회 실패: ${response.status}`;
+
+    if (response.status === 403 && message.includes('FORBIDDEN_ACCESS')) {
+      throw new ForbiddenAccessError(message);
+    }
+    if (response.status === 404 && message.includes('RECOMMENDATION_NOT_FOUND')) {
+      throw new RecommendationNotFoundError(message);
+    }
+    if (response.status === 502 || response.status === 503) {
+      throw new AiServerError(message);
+    }
+
+    throw new Error(message);
+  }
+
+  return result.data;
+}
+
+// 팀 제안(offer) 발송 시 발생하는 400 에러들을 구분하기 위한 전용 에러
+export class SchoolNotVerifiedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'SchoolNotVerifiedError';
+  }
+}
+
+export class TeamRecruitmentClosedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'TeamRecruitmentClosedError';
+  }
+}
+
+export class InvalidInputError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'InvalidInputError';
+  }
+}
+
+export class DuplicateResourceError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'DuplicateResourceError';
+  }
+}
+
+// 404 RESOURCE_NOT_FOUND / USER_NOT_FOUND — 팀 또는 대상 유저가 존재하지 않음
+export class ResourceNotFoundError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ResourceNotFoundError';
+  }
+}
+
+export type OfferStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'CANCELED';
+
+
+export type TeamOfferResponseDTO = {
+  offerId: number;
+  teamId: number;
+  teamTitle: string;
+  promotionText: string;
+  role: string[];
+  requiredSkills: string[];
+  capacity: number;
+  eventId: number | null;
+  leaderId: number;
+  leaderName: string | null;
+  targetUserId: number;
+  targetUserName: string;
+  targetUserSchool: string;
+  targetUserMajor: string;
+  message: string | null;
+  aiScore: number | null;
+  aiLabel: string | null;
+  status: OfferStatus;
+  createdAt: string;
+  respondedAt: string | null;
+};
+
+type CreateTeamOfferParams = {
+  teamId: number;
+  userId: number;
+  message?: string;
+};
+
+// 팀장이 팀 참여를 원하는 유저에게 먼저 제안(offer)을 보낼 때 사용
+export async function createTeamOffer(
+  params: CreateTeamOfferParams
+): Promise<TeamOfferResponseDTO> {
+  const accessToken = await getAccessToken();
+
+  if (!accessToken) {
+    throw new Error('로그인이 필요합니다.');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/teams/${params.teamId}/offers`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ userId: params.userId, message: params.message }),
+  });
+
+  const text = await response.text();
+  const result: ApiResponse<TeamOfferResponseDTO> | null = text ? JSON.parse(text) : null;
+
+  if (!response.ok || !result?.success) {
+    const message = result?.message || `팀 제안 발송 실패: ${response.status}`;
+
+    if (response.status === 400) {
+      if (message.includes('SCHOOL_NOT_VERIFIED')) {
+        throw new SchoolNotVerifiedError(message);
+      }
+      if (message.includes('TEAM_RECRUITMENT_CLOSED')) {
+        throw new TeamRecruitmentClosedError(message);
+      }
+      if (message.includes('INVALID_INPUT')) {
+        throw new InvalidInputError(message);
+      }
+      if (message.includes('DUPLICATE_RESOURCE')) {
+        throw new DuplicateResourceError(message);
+      }
+    }
+    if (response.status === 403 && message.includes('FORBIDDEN_ACCESS')) {
+      throw new ForbiddenAccessError(message);
+    }
+    if (response.status === 404) {
+      throw new ResourceNotFoundError(message);
+    }
+
+    throw new Error(message);
+  }
+
+  return result.data;
+}
+
+// 400 OFFER_ALREADY_RESPONDED — 이미 수락/거절/취소된 제안을 다시 취소하려는 경우
+export class OfferAlreadyRespondedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'OfferAlreadyRespondedError';
+  }
+}
+
+// 팀장이 자기 팀이 보낸 제안 목록을 조회할 때 사용 (최신순)
+export async function getTeamOffers(teamId: number): Promise<TeamOfferResponseDTO[]> {
+  const accessToken = await getAccessToken();
+
+  if (!accessToken) {
+    throw new Error('로그인이 필요합니다.');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/teams/${teamId}/offers`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  const text = await response.text();
+  const result: ApiResponse<TeamOfferResponseDTO[]> | null = text ? JSON.parse(text) : null;
+
+  if (!response.ok || !result?.success) {
+    const message = result?.message || `보낸 제안 목록 조회 실패: ${response.status}`;
+
+    if (response.status === 403 && message.includes('FORBIDDEN_ACCESS')) {
+      throw new ForbiddenAccessError(message);
+    }
+
+    throw new Error(message);
+  }
+
+  return result.data;
+}
+
+// 아직 응답받지 않은 제안을 취소할 때 사용 (삭제가 아니라 CANCELED 상태로 보존됨)
+export async function cancelTeamOffer(offerId: number): Promise<void> {
+  const accessToken = await getAccessToken();
+
+  if (!accessToken) {
+    throw new Error('로그인이 필요합니다.');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/teams/offers/${offerId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  const text = await response.text();
+  const result: ApiResponse<null> | null = text ? JSON.parse(text) : null;
+
+  if (!response.ok || !result?.success) {
+    const message = result?.message || `제안 취소 실패: ${response.status}`;
+
+    if (response.status === 400 && message.includes('OFFER_ALREADY_RESPONDED')) {
+      throw new OfferAlreadyRespondedError(message);
+    }
+    if (response.status === 403 && message.includes('FORBIDDEN_ACCESS')) {
+      throw new ForbiddenAccessError(message);
+    }
+    if (response.status === 404) {
+      throw new ResourceNotFoundError(message);
+    }
+
+    throw new Error(message);
+  }
+}

@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -17,7 +17,17 @@ import {
   MatchingIntentRequiredError,
   ProposalNotFoundError,
 } from '@/api/apply';
-import { getTeamDetail, type TeamDetail } from '@/api/team';
+import {
+  cancelTeamOffer,
+  ForbiddenAccessError,
+  getTeamDetail,
+  getTeamOffers,
+  OfferAlreadyRespondedError,
+  ResourceNotFoundError,
+  type OfferStatus,
+  type TeamDetail,
+  type TeamOfferResponseDTO,
+} from '@/api/team';
 import { Back } from '@/assets/images/tool';
 
 type State =
@@ -33,8 +43,6 @@ export default function TeamDetailScreen() {
 
   const load = useCallback(
     async (isRefetch = false) => {
-      // 최초 진입일 때만 로딩 스피너를 보여준다.
-      // 재진입(포커스) 시에는 이미 화면에 데이터가 있으니 조용히 갱신만 한다.
       if (!isRefetch) {
         setState({ status: 'loading' });
       }
@@ -44,7 +52,6 @@ export default function TeamDetailScreen() {
         setState({ status: 'ready', data });
       } catch (err) {
         if (isRefetch) {
-          // 조용한 갱신 실패는 무시한다 (이미 화면에 이전 데이터가 떠 있음).
           return;
         }
         setState({
@@ -56,7 +63,6 @@ export default function TeamDetailScreen() {
     [teamId],
   );
 
-  // 화면에 다시 포커스될 때마다(teamApply에서 뒤로가기로 돌아왔을 때 등) 조용히 재조회한다.
   useFocusEffect(
     useCallback(() => {
       load(true);
@@ -65,7 +71,6 @@ export default function TeamDetailScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
-      {/* 상단 헤더 */}
       <View className="flex-row items-center justify-between px-6 pt-2 pb-2 border-b border-gray-100">
         <TouchableOpacity onPress={() => router.back()}>
           <Image source={Back} style={{ width: 26, height: 26 }} contentFit="contain" />
@@ -99,6 +104,20 @@ function Avatar() {
   return <View className="w-12 h-12 rounded-full bg-gray-200" />;
 }
 
+const OFFER_STATUS_LABEL: Record<OfferStatus, string> = {
+  PENDING: '대기중',
+  ACCEPTED: '수락됨',
+  REJECTED: '거절됨',
+  CANCELED: '취소됨',
+};
+
+const OFFER_STATUS_STYLE: Record<OfferStatus, { bg: string; text: string }> = {
+  PENDING: { bg: 'bg-amber-50', text: 'text-amber-600' },
+  ACCEPTED: { bg: 'bg-emerald-50', text: 'text-emerald-600' },
+  REJECTED: { bg: 'bg-red-50', text: 'text-red-500' },
+  CANCELED: { bg: 'bg-gray-100', text: 'text-gray-400' },
+};
+
 function TeamDetailContent({
   data,
   teamId,
@@ -110,6 +129,70 @@ function TeamDetailContent({
 }) {
   const additionalMembers = data.currentMemberCount - 1;
   const [aiLoading, setAiLoading] = useState(false);
+
+  // 보낸 제안 목록 (팀장만)
+  const [offers, setOffers] = useState<TeamOfferResponseDTO[] | null>(null);
+  const [offersError, setOffersError] = useState<string | null>(null);
+  const [cancelingId, setCancelingId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!data.leader) return;
+
+    let isMounted = true;
+    setOffersError(null);
+
+    getTeamOffers(Number(teamId))
+      .then((list) => {
+        if (isMounted) setOffers(list);
+      })
+      .catch((err) => {
+        if (!isMounted) return;
+        if (err instanceof ForbiddenAccessError) {
+          setOffersError('이 팀의 팀장만 볼 수 있어요.');
+        } else {
+          setOffersError(err instanceof Error ? err.message : '보낸 제안을 불러오지 못했어요.');
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [data.leader, teamId]);
+
+  const handleCancelOffer = (offerId: number) => {
+    Alert.alert('제안 취소', '보낸 제안을 취소할까요?', [
+      { text: '아니요', style: 'cancel' },
+      {
+        text: '취소하기',
+        style: 'destructive',
+        onPress: async () => {
+          setCancelingId(offerId);
+          try {
+            await cancelTeamOffer(offerId);
+            setOffers((prev) =>
+              prev
+                ? prev.map((o) =>
+                    o.offerId === offerId ? { ...o, status: 'CANCELED' as const } : o,
+                  )
+                : prev,
+            );
+          } catch (err) {
+            if (err instanceof OfferAlreadyRespondedError) {
+              Alert.alert('알림', '이미 응답이 처리된 제안이라 취소할 수 없어요.');
+            } else if (err instanceof ForbiddenAccessError) {
+              Alert.alert('권한 없음', '이 팀의 팀장만 취소할 수 있어요.');
+            } else if (err instanceof ResourceNotFoundError) {
+              Alert.alert('알림', '제안 정보를 찾을 수 없어요.');
+            } else {
+              Alert.alert('오류', '제안을 취소하지 못했어요. 잠시 후 다시 시도해주세요.');
+            }
+          } finally {
+            setCancelingId(null);
+          }
+        },
+      },
+    ]);
+  };
 
   const handleAIApply = async () => {
     if (aiLoading) return;
@@ -155,7 +238,6 @@ function TeamDetailContent({
         contentContainerStyle={{ paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* 특성 태그 */}
         {!!data.characteristic && (
           <View className="self-start bg-indigo-50 rounded-lg px-2.5 py-1 mb-3">
             <Text className="text-indigo-600 text-xs font-pretendard-bold">
@@ -164,12 +246,10 @@ function TeamDetailContent({
           </View>
         )}
 
-        {/* 제목 */}
         <Text className="text-gray-900 text-2xl font-pretendard-bold leading-9 mb-5">
           {data.title}
         </Text>
 
-        {/* 팀장 정보 (+ 협업 온도) */}
         <View className="flex-row items-center mb-6 bg-gray-50 p-3.5 rounded-2xl">
           <Avatar />
           <View className="ml-3.5 flex-1">
@@ -197,7 +277,6 @@ function TeamDetailContent({
           </View>
         </View>
 
-        {/* 주요 요약 정보 (카드 스타일) */}
         <View className="flex-row bg-slate-50 rounded-2xl p-4 mb-7 justify-between items-center">
           <View className="flex-1 items-center">
             <Text className="text-gray-400 text-xs font-pretendard-medium mb-1">모집 인원</Text>
@@ -221,7 +300,6 @@ function TeamDetailContent({
           </View>
         </View>
 
-        {/* 팀 소개 */}
         <View className="mb-7">
           <Text className="text-gray-900 text-lg font-pretendard-bold mb-2.5">
             팀 소개
@@ -231,7 +309,6 @@ function TeamDetailContent({
           </Text>
         </View>
 
-        {/* 모집 역할 */}
         <View className="mb-7">
           <Text className="text-gray-900 text-lg font-pretendard-bold mb-3">
             모집 역할
@@ -247,7 +324,6 @@ function TeamDetailContent({
           </View>
         </View>
 
-        {/* 요구 기술 */}
         {data.requiredSkills.length > 0 && (
           <View className="mb-7">
             <Text className="text-gray-900 text-lg font-pretendard-bold mb-3">
@@ -290,7 +366,6 @@ function TeamDetailContent({
             </View>
           </View>
 
-          {/* 팀장 목록 아이템 */}
           <View className="flex-row items-center py-2">
             <Avatar />
             <View className="ml-3 flex-1">
@@ -308,7 +383,6 @@ function TeamDetailContent({
             </View>
           </View>
 
-          {/* 그 외 팀원 */}
           {additionalMembers > 0 && (
             <View className="mt-2 bg-gray-50 rounded-xl p-3 items-center">
               <Text className="text-gray-500 text-sm font-pretendard-medium">
@@ -317,6 +391,71 @@ function TeamDetailContent({
             </View>
           )}
         </View>
+
+        {/* 보낸 제안 (팀장 전용) */}
+        {data.leader && (
+          <View className="border-t border-gray-100 pt-6 mt-6">
+            <Text className="text-gray-900 text-lg font-pretendard-bold mb-4">
+              보낸 제안{offers ? ` ${offers.length}건` : ''}
+            </Text>
+
+            {offers === null && !offersError && (
+              <View className="py-6 items-center justify-center">
+                <ActivityIndicator color="#4F46E5" size="small" />
+              </View>
+            )}
+
+            {offersError && (
+              <Text className="text-gray-400 font-pretendard text-sm">{offersError}</Text>
+            )}
+
+            {offers !== null && offers.length === 0 && (
+              <Text className="text-gray-400 font-pretendard text-sm">
+                아직 보낸 제안이 없어요.
+              </Text>
+            )}
+
+            {offers?.map((offer) => {
+              const statusStyle = OFFER_STATUS_STYLE[offer.status];
+              return (
+                <View
+                  key={offer.offerId}
+                  className="flex-row items-center py-3 border-b border-gray-50 last:border-b-0"
+                >
+                  <Avatar />
+                  <View className="ml-3 flex-1">
+                    <Text className="text-gray-900 text-base font-pretendard-bold">
+                      {offer.targetUserName}
+                    </Text>
+                    <Text className="text-gray-400 text-sm mt-0.5">
+                      {offer.targetUserSchool} · {offer.targetUserMajor}
+                    </Text>
+                  </View>
+
+                  <View className={`${statusStyle.bg} rounded-lg px-2.5 py-1 mr-2`}>
+                    <Text className={`${statusStyle.text} text-xs font-pretendard-bold`}>
+                      {OFFER_STATUS_LABEL[offer.status]}
+                    </Text>
+                  </View>
+
+                  {offer.status === 'PENDING' && (
+                    <TouchableOpacity
+                      onPress={() => handleCancelOffer(offer.offerId)}
+                      disabled={cancelingId === offer.offerId}
+                      className="border border-gray-200 rounded-lg px-2.5 py-1.5"
+                    >
+                      {cancelingId === offer.offerId ? (
+                        <ActivityIndicator color="#9CA3AF" size="small" />
+                      ) : (
+                        <Text className="text-gray-500 text-xs font-pretendard-bold">취소</Text>
+                      )}
+                    </TouchableOpacity>
+                  )}
+                </View>
+              );
+            })}
+          </View>
+        )}
       </ScrollView>
 
       {/* 하단 고정 버튼 */}
