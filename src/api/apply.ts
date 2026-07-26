@@ -247,33 +247,13 @@ export async function cancelApplication(applicationId: number) {
   return result.message;
 }
 
-// 7. 특정 팀의 지원자 목록 조회 (팀장용)
-export async function getTeamApplicants(teamId: number) {
-  const result = await authenticatedFetch<Application[]>(
-    `/api/teams/${teamId}/applications`
-  );
-  return result.data;
-}
-
-// 7-1. 지원서 승인/거절 처리 (팀장용)
-export async function respondToApplication(applicationId: number, accepted: boolean) {
-  const result = await authenticatedFetch<Application>(
-    `/api/teams/applications/${applicationId}`,
-    {
-      method: 'PATCH',
-      body: JSON.stringify({ accepted }),
-    }
-  );
-  return result.data;
-}
-
-// 8. 내가 받은 제안 목록
+// 7. 내가 받은 제안 목록
 export async function getReceivedOffers() {
   const result = await authenticatedFetch<TeamOffer[]>('/api/teams/offers/me');
   return result.data;
 }
 
-// 9. 받은 제안 수락/거절
+// 8. 받은 제안 수락/거절
 export async function respondToOffer(offerId: number, accepted: boolean) {
   const result = await authenticatedFetch<TeamOffer>(
     `/api/teams/offers/${offerId}`,
