@@ -1,4 +1,4 @@
-import { fetchEvents, searchEvents, type EventCategory, type EventItem } from '@/api/events';
+import { EVENT_FIELD_LABELS, fetchEvents, searchEvents, type EventCategory, type EventField, type EventItem } from '@/api/events';
 import { SearchLineBasic } from '@/assets/icons';
 import { EventCard } from '@/components/ui/EventCard';
 import { Image } from 'expo-image';
@@ -15,29 +15,38 @@ const TOP_TAB_CATEGORY: Record<TopTab, EventCategory> = {
   교내활동: 'SCHOOL',
 };
 
-const FILTERS = ['전체', '브랜드/네이밍', '기획/아이디어', '예체능', '데이터 분석', '기타'];
+const FIELD_FILTERS: { label: string; value: EventField | null }[] = [
+  { label: '전체', value: null },
+  ...(Object.entries(EVENT_FIELD_LABELS) as [EventField, string][]).map(([value, label]) => ({ label, value })),
+];
 
 export default function ActivityScreen() {
   const insets = useSafeAreaInsets();
   const [topTab, setTopTab] = useState<TopTab>('공모전');
-  const [filter, setFilter] = useState('전체');
+  const [filter, setFilter] = useState<EventField | null>(null);
   const [items, setItems] = useState<EventItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<EventItem[]>([]);
-  const [isSearchLoading, setIsSearchLoading] = useState(false);
+  const [debouncedKeyword, setDebouncedKeyword] = useState('');
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => setDebouncedKeyword(searchQuery.trim()), 400);
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
+  const isFiltering = filter !== null || debouncedKeyword.length > 0;
 
   useEffect(() => {
     const controller = new AbortController();
-
     const category = TOP_TAB_CATEGORY[topTab];
-    fetchEvents(category, controller.signal)
-      .then((events) => {
-        // TODO: 서버가 category 쿼리 파라미터를 무시하고 항상 전체 목록을 반환해서
-        // 임시로 클라이언트에서 한 번 더 걸러낸다. 서버 필터링이 정상화되면 제거.
-        setItems(events.filter((event) => event.category === category));
-      })
+
+    const request = isFiltering
+      ? searchEvents({ category, field: filter ?? undefined, keyword: debouncedKeyword || undefined, size: 100 }, controller.signal)
+      : fetchEvents(category, controller.signal).then((events) => events.filter((event) => event.category === category));
+
+    request
+      .then(setItems)
       .catch((error) => {
         if (error instanceof Error && error.name === 'AbortError') return;
         console.warn('[ActivityScreen] 목록 조회 실패', error);
@@ -46,57 +55,17 @@ export default function ActivityScreen() {
       .finally(() => setIsLoading(false));
 
     return () => controller.abort();
-  }, [topTab]);
+  }, [topTab, filter, debouncedKeyword, isFiltering]);
 
   const handleSearchChange = (text: string) => {
     setSearchQuery(text);
-    if (!text.trim()) {
-      setSearchResults([]);
-      setIsSearchLoading(false);
-    } else {
-      setIsSearchLoading(true);
-    }
+    setIsLoading(true);
   };
-
-  useEffect(() => {
-    const keyword = searchQuery.trim();
-    if (!keyword) return;
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      searchEvents(keyword, controller.signal)
-        .then(setSearchResults)
-        .catch((error) => {
-          if (error instanceof Error && error.name === 'AbortError') return;
-          console.warn('[ActivityScreen] 검색 실패', error);
-          setSearchResults([]);
-        })
-        .finally(() => setIsSearchLoading(false));
-    }, 400);
-
-    return () => {
-      clearTimeout(timeoutId);
-      controller.abort();
-    };
-  }, [searchQuery]);
 
   const handleSearchSubmit = () => {
-    const keyword = searchQuery.trim();
-    if (!keyword) return;
-
-    setIsSearchLoading(true);
-    searchEvents(keyword)
-      .then(setSearchResults)
-      .catch((error) => {
-        console.warn('[ActivityScreen] 검색 실패', error);
-        setSearchResults([]);
-      })
-      .finally(() => setIsSearchLoading(false));
+    setDebouncedKeyword(searchQuery.trim());
+    setIsLoading(true);
   };
-
-  const activeQuery = searchQuery.trim();
-  const isShowingSearchResults = activeQuery.length > 0;
-  const visibleItems = isShowingSearchResults ? searchResults : items;
 
   return (
     <View className="flex-1 bg-white">
@@ -130,18 +99,21 @@ export default function ActivityScreen() {
         className="max-h-12 px-5"
         contentContainerClassName="gap-2"
       >
-        {FILTERS.map((item) => {
-          const isSelected = filter === item;
+        {FIELD_FILTERS.map(({ label, value }) => {
+          const isSelected = filter === value;
           return (
             <TouchableOpacity
-              key={item}
-              onPress={() => setFilter(item)}
+              key={label}
+              onPress={() => {
+                setFilter(value);
+                setIsLoading(true);
+              }}
               className={`h-9 px-4 rounded-full justify-center items-center border ${
                 isSelected ? 'bg-[#3E6AF4] border-[#3E6AF4]' : 'bg-white border-gray-200'
               }`}
             >
               <Text className={`font-pretendard-semibold text-sm ${isSelected ? 'text-white' : 'text-gray-400'}`}>
-                {item}
+                {label}
               </Text>
             </TouchableOpacity>
           );
@@ -166,7 +138,7 @@ export default function ActivityScreen() {
         </TouchableOpacity>
       </View>
 
-      {(isShowingSearchResults ? isSearchLoading : isLoading) ? (
+      {isLoading ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator color="#3E6AF4" />
         </View>
@@ -176,10 +148,10 @@ export default function ActivityScreen() {
           contentContainerClassName="gap-4"
           contentContainerStyle={{ paddingBottom: 90 + insets.bottom }}
         >
-          {isShowingSearchResults && visibleItems.length === 0 ? (
+          {isFiltering && items.length === 0 ? (
             <Text className="text-gray-400 text-center mt-10 font-pretendard-medium">검색 결과가 없어요.</Text>
           ) : (
-            visibleItems.map((item) => <EventCard key={item.id} item={item} />)
+            items.map((item) => <EventCard key={item.id} item={item} />)
           )}
         </ScrollView>
       )}

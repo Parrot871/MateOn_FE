@@ -10,6 +10,7 @@ const CATEGORY_LABEL: Record<EventCategory, string> = {
   CONTEST: '공모전',
   EXTERNAL: '대외활동',
   SCHOOL: '교내활동',
+  ETC: '기타',
 };
 
 interface EventCardProps {
@@ -57,9 +58,11 @@ export function EventCard({ item }: EventCardProps) {
           <View className="px-2 py-0.5 rounded-md bg-[#E5EBFF]">
             <Text className="text-[#3E6AF4] text-xs font-pretendard-semibold">{CATEGORY_LABEL[item.category]}</Text>
           </View>
-          <View className="px-2 py-0.5 rounded-md bg-[#E5EBFF]">
-            <Text className="text-[#3E6AF4] text-xs font-pretendard-semibold">{item.fieldLabel}</Text>
-          </View>
+          {item.fieldLabel && (
+            <View className="px-2 py-0.5 rounded-md bg-[#E5EBFF]">
+              <Text className="text-[#3E6AF4] text-xs font-pretendard-semibold">{item.fieldLabel}</Text>
+            </View>
+          )}
         </View>
         <Text className="text-gray-500 text-xs font-pretendard" numberOfLines={1}>
           주최: {item.organizer}
