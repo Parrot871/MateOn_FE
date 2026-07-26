@@ -3,14 +3,61 @@ import { getAccessToken } from './tokenStorage';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
-export type EventCategory = 'CONTEST' | 'EXTERNAL' | 'SCHOOL';
+export type EventCategory = 'CONTEST' | 'EXTERNAL' | 'SCHOOL' | 'ETC';
+
+export type EventField =
+  | 'TRAVEL_HOTEL_AIRLINE'
+  | 'PRESS_MEDIA'
+  | 'CULTURE_HISTORY'
+  | 'EVENT_FESTIVAL'
+  | 'EDUCATION'
+  | 'DESIGN_PHOTO_ART_VIDEO'
+  | 'ECONOMY_FINANCE'
+  | 'MANAGEMENT_CONSULTING_MARKETING'
+  | 'POLITICS_SOCIETY_LAW'
+  | 'SPORTS_FITNESS'
+  | 'MEDICAL_HEALTH'
+  | 'BEAUTY_COSMETICS'
+  | 'SCIENCE_ENGINEERING_TECH_IT'
+  | 'COOKING_FOOD'
+  | 'STARTUP_SELF_DEVELOPMENT'
+  | 'ENVIRONMENT_ENERGY'
+  | 'CONTENTS'
+  | 'SOCIAL_CONTRIBUTION_EXCHANGE'
+  | 'DISTRIBUTION_LOGISTICS'
+  | 'PLANNING_IDEA'
+  | 'ETC';
+
+export const EVENT_FIELD_LABELS: Record<EventField, string> = {
+  TRAVEL_HOTEL_AIRLINE: '여행/호텔/항공',
+  PRESS_MEDIA: '언론/미디어',
+  CULTURE_HISTORY: '문화/역사',
+  EVENT_FESTIVAL: '행사/페스티벌',
+  EDUCATION: '교육',
+  DESIGN_PHOTO_ART_VIDEO: '디자인/사진/예술/영상',
+  ECONOMY_FINANCE: '경제/금융',
+  MANAGEMENT_CONSULTING_MARKETING: '경영/컨설팅/마케팅',
+  POLITICS_SOCIETY_LAW: '정치/사회/법률',
+  SPORTS_FITNESS: '체육/헬스',
+  MEDICAL_HEALTH: '의료/보건',
+  BEAUTY_COSMETICS: '뷰티/미용/화장품',
+  SCIENCE_ENGINEERING_TECH_IT: '과학/공학/기술/IT',
+  COOKING_FOOD: '요리/식품',
+  STARTUP_SELF_DEVELOPMENT: '창업/자기계발',
+  ENVIRONMENT_ENERGY: '환경/에너지',
+  CONTENTS: '콘텐츠',
+  SOCIAL_CONTRIBUTION_EXCHANGE: '사회공헌/교류',
+  DISTRIBUTION_LOGISTICS: '유통/물류',
+  PLANNING_IDEA: '기획/아이디어',
+  ETC: '기타',
+};
 
 export type EventItem = {
   id: number;
   title: string;
   category: EventCategory;
-  field: string;
-  fieldLabel: string;
+  field: EventField | null;
+  fieldLabel: string | null;
   organizer: string;
   description: string | null;
   summarizedDescription: string | null;
@@ -20,8 +67,24 @@ export type EventItem = {
   startDate: string;
   endDate: string;
   recommendedTargets: string | null;
-  targetColleges: string[] | null;
+  targetColleges: string | null;
   targetSchool: string | null;
+};
+
+export type EventRegisterPayload = {
+  category: EventCategory;
+  title: string;
+  field: EventField;
+  description?: string;
+  imageUrl?: string;
+  detailUrl?: string;
+  startDate?: string;
+  endDate?: string;
+  organizer?: string;
+  targetSchool?: string;
+  summarizedDescription?: string;
+  recommendedTargets?: string;
+  externalId?: string;
 };
 
 export function computeDDay(endDate: string): string {
@@ -56,10 +119,27 @@ export async function fetchEvents(category: EventCategory, signal?: AbortSignal)
   return result.data;
 }
 
-export async function searchEvents(keyword: string, signal?: AbortSignal): Promise<EventItem[]> {
+export type EventSearchParams = {
+  keyword?: string;
+  school?: string;
+  field?: EventField;
+  category?: EventCategory;
+  page?: number;
+  size?: number;
+};
+
+export async function searchEvents(params: EventSearchParams, signal?: AbortSignal): Promise<EventItem[]> {
   const accessToken = await getAccessToken();
 
-  const response = await fetch(`${API_BASE_URL}/api/events/search?keyword=${encodeURIComponent(keyword)}`, {
+  const query = new URLSearchParams();
+  if (params.keyword) query.set('keyword', params.keyword);
+  if (params.school) query.set('school', params.school);
+  if (params.field) query.set('field', params.field);
+  if (params.category) query.set('category', params.category);
+  if (params.page !== undefined) query.set('page', String(params.page));
+  if (params.size !== undefined) query.set('size', String(params.size));
+
+  const response = await fetch(`${API_BASE_URL}/api/events/search?${query.toString()}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
     signal,
   });
@@ -71,7 +151,27 @@ export async function searchEvents(keyword: string, signal?: AbortSignal): Promi
     throw new Error(result?.message || `활동 검색 실패: ${response.status}`);
   }
 
-  console.log('[searchEvents]', keyword, text);
+  return result.data;
+}
+
+export async function createEvent(payload: EventRegisterPayload): Promise<EventItem> {
+  const accessToken = await getAccessToken();
+
+  const response = await fetch(`${API_BASE_URL}/api/events`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const text = await response.text();
+  const result: ApiResponse<EventItem> | null = text ? JSON.parse(text) : null;
+
+  if (!response.ok || !result?.success) {
+    throw new Error(result?.message || `활동 등록 실패: ${response.status}`);
+  }
 
   return result.data;
 }
