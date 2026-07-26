@@ -284,3 +284,22 @@ export async function respondToOffer(offerId: number, accepted: boolean) {
   );
   return result.data;
 }
+
+// 9. 팀에 온 지원서 목록 조회 (팀장용) — data 구조는 Application과 동일, isMine은 항상 false
+export async function getTeamApplications(teamId: number) {
+  const result = await authenticatedFetch<Application[]>(
+    `/api/teams/${teamId}/applications`
+  );
+  return result.data;
+}
+
+// 10. 지원서 승인/거절 처리 (팀장용) — isApproved=true면 승인, false면 거절
+export async function respondToApplication(applicationId: number, isApproved: boolean) {
+  const result = await authenticatedFetch<null>(
+    `/api/teams/applications/${applicationId}?isApproved=${isApproved}`,
+    {
+      method: 'PATCH',
+    }
+  );
+  return result.message;
+}

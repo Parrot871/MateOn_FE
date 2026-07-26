@@ -693,3 +693,111 @@ export async function getUserToTeamRecommendationReason(
 
   return result.data.reason;
 }
+// 400 TEAM_ALREADY_ENDED — 이미 종료된 팀을 다시 종료하려는 경우
+export class TeamAlreadyEndedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'TeamAlreadyEndedError';
+  }
+}
+
+// 팀장이 자기 팀 모집글을 수정할 때 사용 (Body 구조는 등록용 TeamRequestPayload와 동일)
+export async function updateTeamRecruitment(
+  teamId: number,
+  payload: TeamRequestPayload
+): Promise<TeamDetail> {
+  const accessToken = await getAccessToken();
+
+  if (!accessToken) {
+    throw new Error('로그인이 필요합니다.');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/teams/${teamId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const text = await response.text();
+  const result: ApiResponse<TeamDetail> | null = text ? JSON.parse(text) : null;
+
+  if (!response.ok || !result?.success) {
+    const message = result?.message || `팀 모집글 수정 실패: ${response.status}`;
+
+    if (response.status === 403 && message.includes('FORBIDDEN_ACCESS')) {
+      throw new ForbiddenAccessError(message);
+    }
+    if (response.status === 404) {
+      throw new ResourceNotFoundError(message);
+    }
+
+    throw new Error(message);
+  }
+
+  return result.data;
+}
+
+// 팀장이 자기 팀 모집글을 삭제할 때 사용
+export async function deleteTeam(teamId: number): Promise<void> {
+  const accessToken = await getAccessToken();
+
+  if (!accessToken) {
+    throw new Error('로그인이 필요합니다.');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/teams/${teamId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  const text = await response.text();
+  const result: ApiResponse<null> | null = text ? JSON.parse(text) : null;
+
+  if (!response.ok || !result?.success) {
+    const message = result?.message || `팀 모집글 삭제 실패: ${response.status}`;
+
+    if (response.status === 403 && message.includes('FORBIDDEN_ACCESS')) {
+      throw new ForbiddenAccessError(message);
+    }
+    if (response.status === 404) {
+      throw new ResourceNotFoundError(message);
+    }
+
+    throw new Error(message);
+  }
+}
+
+// 팀장이 팀 활동 종료를 선언할 때 사용. endedAt 기록 + isRecruiting=false 처리 + 팀원 전체에게 평가 알림 발송.
+// 참고: 연결된 Event 종료일이 지나면 배치 작업으로 자동 종료될 수도 있으므로,
+// 호출 전 이미 종료된 상태일 수 있다는 점을 호출부에서 감안해야 함.
+export async function completeTeamActivity(teamId: number): Promise<void> {
+  const accessToken = await getAccessToken();
+
+  if (!accessToken) {
+    throw new Error('로그인이 필요합니다.');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/teams/${teamId}/complete`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  const text = await response.text();
+  const result: ApiResponse<null> | null = text ? JSON.parse(text) : null;
+
+  if (!response.ok || !result?.success) {
+    const message = result?.message || `팀 활동 종료 실패: ${response.status}`;
+
+    if (response.status === 400 && message.includes('TEAM_ALREADY_ENDED')) {
+      throw new TeamAlreadyEndedError(message);
+    }
+    if (response.status === 403 && message.includes('FORBIDDEN_ACCESS')) {
+      throw new ForbiddenAccessError(message);
+    }
+
+    throw new Error(message);
+  }
+}

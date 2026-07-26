@@ -1,5 +1,11 @@
-import { getTeamApplicants, type Application } from '@/api/apply';
-import { getUnivByEmail } from '@/utils/univ';
+import {
+  getTeamApplications,
+  OfferForbiddenError,
+  ProposalNotFoundError,
+  respondToApplication,
+  type Application,
+  type ApplicationStatus,
+} from '@/api/apply';
 import {
   AiServerError,
   ForbiddenAccessError,
@@ -9,10 +15,11 @@ import {
 } from '@/api/team';
 import { Back } from '@/assets/images/tool';
 import MemberCandidateCard from '@/components/ui/MemberCandidateCard';
+import { getUnivByEmail } from '@/utils/univ';
 import { Image } from 'expo-image';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type TabKey = 'applicant' | 'ai';
@@ -21,6 +28,22 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'applicant', label: '지원자순' },
   { key: 'ai', label: 'AI 추천순' },
 ];
+
+const APPLICATION_STATUS_LABEL: Record<ApplicationStatus, string> = {
+  PENDING: '대기중',
+  APPROVED: '승인됨',
+  REJECTED: '거절됨',
+};
+
+const APPLICATION_STATUS_STYLE: Record<ApplicationStatus, { bg: string; text: string }> = {
+  PENDING: { bg: 'bg-amber-50', text: 'text-amber-600' },
+  APPROVED: { bg: 'bg-emerald-50', text: 'text-emerald-600' },
+  REJECTED: { bg: 'bg-red-50', text: 'text-red-500' },
+};
+
+function ApplicantAvatar() {
+  return <View className="w-12 h-12 rounded-full bg-gray-200" />;
+}
 
 export default function TeamMembersScreen() {
   const { teamId } = useLocalSearchParams<{ teamId: string }>();
@@ -33,8 +56,10 @@ export default function TeamMembersScreen() {
   const [aiCandidates, setAiCandidates] = useState<UserRecommendation[] | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
 
+  // 지원자순
   const [applicants, setApplicants] = useState<Application[] | null>(null);
   const [applicantsError, setApplicantsError] = useState<string | null>(null);
+  const [respondingId, setRespondingId] = useState<number | null>(null);
 
   const loadAiCandidates = useCallback(() => {
     if (!teamId) return;
@@ -58,11 +83,17 @@ export default function TeamMembersScreen() {
   const loadApplicants = useCallback(() => {
     if (!teamId) return;
     setApplicantsError(null);
-    getTeamApplicants(Number(teamId))
+    getTeamApplications(Number(teamId))
       .then(setApplicants)
       .catch((err) => {
         console.error('지원자 목록 조회 실패:', err);
-        setApplicantsError(err instanceof Error ? err.message : '목록을 불러오지 못했습니다.');
+        if (err instanceof OfferForbiddenError) {
+          setApplicantsError('이 팀의 팀장만 지원자 목록을 볼 수 있어요.');
+        } else if (err instanceof ProposalNotFoundError) {
+          setApplicantsError('팀 정보를 찾을 수 없어요.');
+        } else {
+          setApplicantsError(err instanceof Error ? err.message : '지원자 목록을 불러오지 못했습니다.');
+        }
       });
   }, [teamId]);
 
@@ -82,10 +113,6 @@ export default function TeamMembersScreen() {
     }, [activeTab, loadAiCandidates, loadApplicants])
   );
 
-  function handlePressApplicant(item: Application) {
-    router.push({ pathname: '/myApplicationDetail', params: { id: String(item.applicationId) } });
-  }
-
   function handlePressCandidate(item: UserRecommendation) {
   router.push({
     pathname: '/teamMembersDetail',
@@ -93,7 +120,7 @@ export default function TeamMembersScreen() {
       teamId: String(teamId),
       userId: String(item.userId),
       name: item.name,
-      school: [item.school, item.college].filter(Boolean).join(' '),
+      school: item.school,
       major: item.major,
       grade: String(item.grade),
       experienceLevel: item.experienceLevel,
@@ -106,6 +133,47 @@ export default function TeamMembersScreen() {
     },
   });
 }
+
+  function handleRespondApplication(application: Application, isApproved: boolean) {
+    Alert.alert(
+      isApproved ? '지원 승인' : '지원 거절',
+      isApproved
+        ? `${application.applicant.name}님의 지원을 승인할까요?`
+        : `${application.applicant.name}님의 지원을 거절할까요?`,
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: isApproved ? '승인하기' : '거절하기',
+          style: isApproved ? 'default' : 'destructive',
+          onPress: async () => {
+            setRespondingId(application.applicationId);
+            try {
+              await respondToApplication(application.applicationId, isApproved);
+              setApplicants((prev) =>
+                prev
+                  ? prev.map((a) =>
+                      a.applicationId === application.applicationId
+                        ? { ...a, status: isApproved ? 'APPROVED' : 'REJECTED' }
+                        : a,
+                    )
+                  : prev,
+              );
+            } catch (err) {
+              if (err instanceof OfferForbiddenError) {
+                Alert.alert('권한 없음', '이 팀의 팀장만 처리할 수 있어요.');
+              } else if (err instanceof ProposalNotFoundError) {
+                Alert.alert('알림', '지원서 정보를 찾을 수 없어요.');
+              } else {
+                Alert.alert('오류', '처리에 실패했어요. 잠시 후 다시 시도해주세요.');
+              }
+            } finally {
+              setRespondingId(null);
+            }
+          },
+        },
+      ],
+    );
+  }
 
   return (
     <View className="flex-1 bg-gray-50/60">
@@ -195,7 +263,7 @@ export default function TeamMembersScreen() {
             <MemberCandidateCard
               key={item.userId}
               name={item.name}
-              school={[item.school, item.college].filter(Boolean).join(' ')}
+              school={item.school}
               major={item.major}
               grade={item.grade}
               desiredRoles={item.desiredRoles}
@@ -237,29 +305,83 @@ export default function TeamMembersScreen() {
             </View>
           )}
 
-          {applicants !== null && applicants.length === 0 && (
+          {applicants !== null && applicants.length === 0 && !applicantsError && (
             <View className="pt-20 py-10 items-center justify-center bg-white rounded-3xl p-8 border border-gray-100">
               <View className="w-12 h-12 rounded-2xl bg-gray-50 border border-gray-100 justify-center items-center mb-3">
                 <Text className="text-xl">📄</Text>
               </View>
               <Text className="text-gray-900 font-pretendard-bold text-lg mb-1">아직 지원자가 없어요</Text>
               <Text className="text-gray-400 font-pretendard text-sm text-center">
-                지원자가 생기면 여기에 표시돼요.
+                지원서가 도착하면 여기에 표시돼요.
               </Text>
             </View>
           )}
 
-          {applicants?.map((item) => (
-            <MemberCandidateCard
-              key={item.applicationId}
-              name={item.applicant.name}
-              school={[getUnivByEmail(item.applicant.email), item.applicant.college].filter(Boolean).join(' ') || undefined}
-              major={item.applicant.major ?? undefined}
-              grade={item.applicant.grade ?? undefined}
-              tagline={item.applicant.tagline ?? undefined}
-              onPress={() => handlePressApplicant(item)}
-            />
-          ))}
+          {applicants?.map((application) => {
+            const statusStyle = APPLICATION_STATUS_STYLE[application.status];
+            const univ = getUnivByEmail(application.applicant?.email);
+            return (
+              <View
+                key={application.applicationId}
+                className="bg-white rounded-2xl p-4 mb-3 border border-gray-100"
+              >
+                <View className="flex-row items-center">
+                  <ApplicantAvatar />
+                  <View className="ml-3 flex-1">
+                    <Text className="text-gray-900 text-base font-pretendard-bold">
+                      {application.applicant?.name}
+                    </Text>
+                    <Text className="text-gray-400 text-sm mt-0.5">
+                      {[univ, application.applicant?.major].filter(Boolean).join(' · ')}
+                    </Text>
+                  </View>
+                  <View className={`${statusStyle.bg} rounded-lg px-2.5 py-1`}>
+                    <Text className={`${statusStyle.text} text-xs font-pretendard-bold`}>
+                      {APPLICATION_STATUS_LABEL[application.status]}
+                    </Text>
+                  </View>
+                </View>
+
+                {!!application.introduction && (
+                  <Text className="text-gray-700 text-sm mt-3 leading-5" numberOfLines={3}>
+                    {application.introduction}
+                  </Text>
+                )}
+                {!!application.message && (
+                  <Text className="text-gray-500 text-sm mt-1.5 leading-5" numberOfLines={3}>
+                    {application.message}
+                  </Text>
+                )}
+
+                {application.status === 'PENDING' && (
+                  <View className="flex-row gap-2 mt-3.5">
+                    <TouchableOpacity
+                      onPress={() => handleRespondApplication(application, false)}
+                      disabled={respondingId === application.applicationId}
+                      className="flex-1 border border-gray-200 rounded-xl py-2.5 items-center"
+                    >
+                      {respondingId === application.applicationId ? (
+                        <ActivityIndicator color="#9CA3AF" size="small" />
+                      ) : (
+                        <Text className="text-gray-500 text-sm font-pretendard-bold">거절</Text>
+                      )}
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => handleRespondApplication(application, true)}
+                      disabled={respondingId === application.applicationId}
+                      className="flex-1 bg-[#3E6AF4] rounded-xl py-2.5 items-center"
+                    >
+                      {respondingId === application.applicationId ? (
+                        <ActivityIndicator color="#fff" size="small" />
+                      ) : (
+                        <Text className="text-white text-sm font-pretendard-bold">승인</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            );
+          })}
         </ScrollView>
       )}
     </View>
