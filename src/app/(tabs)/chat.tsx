@@ -53,7 +53,7 @@ export default function ChatListScreen() {
           contentContainerStyle={{ paddingTop: 12, paddingBottom: 90 + insets.bottom }}
           ListHeaderComponent={
             rooms.length > 0 ? (
-              <Text className="px-5 mb-3 text-[12px] font-pretendard-medium text-gray-400">
+              <Text className="px-5 mb-3 text-[14px] font-pretendard-medium text-gray-400">
                 총 <Text className="text-blue-600 font-pretendard-bold">{rooms.length}</Text>개의 대화
               </Text>
             ) : null

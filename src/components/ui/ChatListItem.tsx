@@ -17,14 +17,14 @@ export function ChatListItem({ room, onPress }: ChatListItemProps) {
       <View className="w-10 h-10 rounded-full bg-gray-100 mr-3" />
 
       <View className="flex-1">
-        <Text className="font-pretendard-semibold text-base">{room.title}</Text>
-        <Text className="text-gray-500 text-sm" numberOfLines={1}>
+        <Text className="font-pretendard-semibold text-lg">{room.title}</Text>
+        <Text className="text-gray-500 text-base" numberOfLines={1}>
           {room.lastMessage ?? '아직 메시지가 없어요'}
         </Text>
       </View>
 
       <View className="items-end">
-        <Text className="text-gray-400 text-xs font-pretendard-medium mb-1">
+        <Text className="text-gray-400 text-sm font-pretendard-medium mb-1">
           {formatChatTime(room.lastMessageAt)}
         </Text>
         {room.unreadCount > 0 && (

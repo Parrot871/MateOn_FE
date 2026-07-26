@@ -16,15 +16,16 @@ export function ChatInput({ onSend }: Props) {
   };
 
   return (
-    <View className="flex-row items-center px-3 py-2 border-t border-gray-200 bg-white">
+    <View className="flex-row h-20 items-center px-3 py-2 border-t border-gray-200 bg-white">
       <TextInput
-        className="flex-1 bg-gray-100 rounded-full px-4 py-2 mr-2"
+        className="flex-1 bg-gray-100 rounded-full px-4 py-3 mr-2 text-base"
         placeholder="메세지를 입력해주세요"
+        placeholderTextColor="#9CA3AF"
         value={text}
         onChangeText={setText}
       />
       <Pressable onPress={handleSend} className="px-3 py-2">
-        <Text className="text-blue-500 font-semibold">전송</Text>
+        <Text className="text-blue-500 font-semibold text-base">전송</Text>
       </Pressable>
     </View>
   );

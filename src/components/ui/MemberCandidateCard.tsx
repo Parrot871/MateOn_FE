@@ -73,11 +73,11 @@ export default function MemberCandidateCard({
       {/* 상단: 이름/학교전공 + AI 추천 점수 뱃지 */}
       <View className="flex-row items-start justify-between">
         <View className="flex-1 pr-3">
-          <Text className="text-black text-base font-pretendard-bold" numberOfLines={1}>
+          <Text className="text-black text-lg font-pretendard-bold" numberOfLines={1}>
             {name}
           </Text>
           {metaLine.length > 0 && (
-            <Text className="text-gray-400 text-xs font-pretendard-medium mt-0.5" numberOfLines={1}>
+            <Text className="text-gray-400 text-sm font-pretendard-medium mt-0.5" numberOfLines={1}>
               {metaLine}
             </Text>
           )}
@@ -85,7 +85,7 @@ export default function MemberCandidateCard({
 
         {isAiRecommendation && (
           <View className="bg-blue-50 rounded-full px-2.5 py-1 items-end">
-            <Text className="text-blue-600 text-xs font-pretendard-bold">
+            <Text className="text-blue-600 text-sm font-pretendard-bold">
               ✨ AI 추천 {toPercentage(score!)}%
             </Text>
           </View>
@@ -94,7 +94,7 @@ export default function MemberCandidateCard({
 
       {/* AI 추천 근거 문구 */}
       {isAiRecommendation && label && (
-        <Text className="text-blue-500 text-xs font-pretendard-medium mt-1.5" numberOfLines={1}>
+        <Text className="text-blue-500 text-sm font-pretendard-medium mt-1.5" numberOfLines={1}>
          ✨ AI 추천 이유:  {label}
         </Text>
       )}

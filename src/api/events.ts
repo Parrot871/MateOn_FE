@@ -176,6 +176,24 @@ export async function createEvent(payload: EventRegisterPayload): Promise<EventI
   return result.data;
 }
 
+export async function fetchRecommendedEvents(signal?: AbortSignal): Promise<EventItem[]> {
+  const accessToken = await getAccessToken();
+
+  const response = await fetch(`${API_BASE_URL}/api/event/recommended`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    signal,
+  });
+
+  const text = await response.text();
+  const result: ApiResponse<EventItem[]> | null = text ? JSON.parse(text) : null;
+
+  if (!response.ok || !result?.success) {
+    throw new Error(result?.message || `맞춤 활동 추천 조회 실패: ${response.status}`);
+  }
+
+  return result.data;
+}
+
 export async function fetchEventDetail(id: number, signal?: AbortSignal): Promise<unknown> {
   const accessToken = await getAccessToken();
 

@@ -1,3 +1,5 @@
+import { getTeamApplicants, type Application } from '@/api/apply';
+import { getUnivByEmail } from '@/utils/univ';
 import {
   AiServerError,
   ForbiddenAccessError,
@@ -31,7 +33,7 @@ export default function TeamMembersScreen() {
   const [aiCandidates, setAiCandidates] = useState<UserRecommendation[] | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
 
-  const [applicants, setApplicants] = useState<unknown[] | null>(null);
+  const [applicants, setApplicants] = useState<Application[] | null>(null);
   const [applicantsError, setApplicantsError] = useState<string | null>(null);
 
   const loadAiCandidates = useCallback(() => {
@@ -56,8 +58,12 @@ export default function TeamMembersScreen() {
   const loadApplicants = useCallback(() => {
     if (!teamId) return;
     setApplicantsError(null);
-    // TODO: 실제 지원자 목록 API 연결
-    setApplicants([]);
+    getTeamApplicants(Number(teamId))
+      .then(setApplicants)
+      .catch((err) => {
+        console.error('지원자 목록 조회 실패:', err);
+        setApplicantsError(err instanceof Error ? err.message : '목록을 불러오지 못했습니다.');
+      });
   }, [teamId]);
 
   useFocusEffect(
@@ -76,6 +82,10 @@ export default function TeamMembersScreen() {
     }, [activeTab, loadAiCandidates, loadApplicants])
   );
 
+  function handlePressApplicant(item: Application) {
+    router.push({ pathname: '/myApplicationDetail', params: { id: String(item.applicationId) } });
+  }
+
   function handlePressCandidate(item: UserRecommendation) {
   router.push({
     pathname: '/teamMembersDetail',
@@ -83,7 +93,7 @@ export default function TeamMembersScreen() {
       teamId: String(teamId),
       userId: String(item.userId),
       name: item.name,
-      school: item.school,
+      school: [item.school, item.college].filter(Boolean).join(' '),
       major: item.major,
       grade: String(item.grade),
       experienceLevel: item.experienceLevel,
@@ -185,7 +195,7 @@ export default function TeamMembersScreen() {
             <MemberCandidateCard
               key={item.userId}
               name={item.name}
-              school={item.school}
+              school={[item.school, item.college].filter(Boolean).join(' ')}
               major={item.major}
               grade={item.grade}
               desiredRoles={item.desiredRoles}
@@ -232,12 +242,24 @@ export default function TeamMembersScreen() {
               <View className="w-12 h-12 rounded-2xl bg-gray-50 border border-gray-100 justify-center items-center mb-3">
                 <Text className="text-xl">📄</Text>
               </View>
-              <Text className="text-gray-900 font-pretendard-bold text-lg mb-1">지원자 목록 기능은 준비 중이에요</Text>
+              <Text className="text-gray-900 font-pretendard-bold text-lg mb-1">아직 지원자가 없어요</Text>
               <Text className="text-gray-400 font-pretendard text-sm text-center">
-                지원서 API 연결이 끝나면 여기에 표시돼요.
+                지원자가 생기면 여기에 표시돼요.
               </Text>
             </View>
           )}
+
+          {applicants?.map((item) => (
+            <MemberCandidateCard
+              key={item.applicationId}
+              name={item.applicant.name}
+              school={[getUnivByEmail(item.applicant.email), item.applicant.college].filter(Boolean).join(' ') || undefined}
+              major={item.applicant.major ?? undefined}
+              grade={item.applicant.grade ?? undefined}
+              tagline={item.applicant.tagline ?? undefined}
+              onPress={() => handlePressApplicant(item)}
+            />
+          ))}
         </ScrollView>
       )}
     </View>

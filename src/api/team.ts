@@ -34,6 +34,7 @@ export type TeamDetail = {
   connectedActivitySummary: string | null;
   leaderId: number;
   leaderName: string;
+  leaderEmail?: string;
   leaderCollege: string;
   leaderGrade: string;
   leaderMajor: string;
@@ -95,6 +96,7 @@ export type UserRecommendation = {
   userId: number;
   name: string;
   school: string;
+  college?: string;
   major: string;
   grade: string;
   tagline: string;

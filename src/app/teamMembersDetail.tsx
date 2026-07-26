@@ -24,7 +24,7 @@ function ChipGroup({ title, items }: { title: string; items: string[] }) {
   if (items.length === 0) return null;
   return (
     <View className="mt-5">
-      <Text className="text-gray-400 text-xs font-pretendard-semibold mb-2">{title}</Text>
+      <Text className="text-gray-400 text-sm font-pretendard-semibold mb-2">{title}</Text>
       <View className="flex-row flex-wrap">
         {items.map((item, idx) => (
           <Chip key={`${item}-${idx}`} label={item} />
@@ -190,22 +190,22 @@ export default function TeamMembersDetailScreen() {
           </View>
 
           {params.label && (
-            <Text className="text-blue-500 text-xs font-pretendard-medium mt-2">
+            <Text className="text-blue-500 text-sm font-pretendard-medium mt-2">
               AI 추천 이유: {params.label}
             </Text>
           )}
 
           {params.experienceLevel && (
             <View className="mt-4 pt-4 border-t border-gray-50 flex-row">
-              <Text className="text-gray-400 text-xs font-pretendard-medium">경험 수준 : </Text>
-              <Text className="text-gray-600 text-xs font-pretendard-semibold">{params.experienceLevel}</Text>
+              <Text className="text-gray-400 text-sm font-pretendard-medium">경험 수준 : </Text>
+              <Text className="text-gray-600 text-sm font-pretendard-semibold">{params.experienceLevel}</Text>
             </View>
           )}
 
           {params.activityStyle && (
             <View className="mt-1 flex-row">
-              <Text className="text-gray-400 text-xs font-pretendard-medium">활동 스타일 : </Text>
-              <Text className="text-gray-600 text-xs font-pretendard-semibold">{params.activityStyle}</Text>
+              <Text className="text-gray-400 text-sm font-pretendard-medium">활동 스타일 : </Text>
+              <Text className="text-gray-600 text-sm font-pretendard-semibold">{params.activityStyle}</Text>
             </View>
           )}
 
@@ -227,7 +227,7 @@ export default function TeamMembersDetailScreen() {
           ) : detailError ? (
             <Text className="text-gray-400 font-pretendard text-xs">{detailError}</Text>
           ) : detailReason ? (
-            <Text className="text-gray-600 text-sm font-pretendard-medium leading-5">{detailReason}</Text>
+            <Text className="text-gray-600 text-base font-pretendard-medium leading-6">{detailReason}</Text>
           ) : null}
         </View>
       </ScrollView>
@@ -253,7 +253,7 @@ export default function TeamMembersDetailScreen() {
           onPress={handlePropose}
           className="flex-1 ml-2 bg-blue-600 rounded-2xl py-3.5 items-center justify-center"
         >
-          <Text className="text-white font-pretendard-bold text-sm">제안하기</Text>
+          <Text className="text-white font-pretendard-bold text-base">제안하기</Text>
         </TouchableOpacity>
       </View>
     </View>

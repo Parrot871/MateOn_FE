@@ -39,8 +39,9 @@ export default function TeamApplyScreen() {
   // AI 초안을 받아서 들어온 경우인지 (안내 배너 표시용)
   const isFromAI = !!initialMessage;
 
-  const canSubmit =
-    message.trim().length > 0 && contactNumber.trim().length > 0 && !submitting;
+  const isContactNumberValid = contactNumber.replace(/\D/g, '').length === 11;
+
+  const canSubmit = message.trim().length > 0 && isContactNumberValid && !submitting;
 
   const handleSubmit = async () => {
     if (submitting) return;
@@ -49,8 +50,8 @@ export default function TeamApplyScreen() {
       Alert.alert('알림', '지원 동기를 입력해주세요.');
       return;
     }
-    if (contactNumber.trim().length === 0) {
-      Alert.alert('알림', '연락처를 입력해주세요.');
+    if (!isContactNumberValid) {
+      Alert.alert('알림', '정확한 전화번호를 입력해주세요.');
       return;
     }
 
@@ -106,7 +107,7 @@ export default function TeamApplyScreen() {
 
           {/* 소개 (선택) */}
           <View className="mb-5">
-            <Text className="text-gray-900 text-sm font-pretendard-bold mb-2">
+            <Text className="text-gray-900 text-base font-pretendard-bold mb-2">
               간단한 소개{' '}
               <Text className="text-gray-400 font-pretendard-regular">(선택)</Text>
             </Text>
@@ -123,7 +124,7 @@ export default function TeamApplyScreen() {
 
           {/* 지원 동기 (필수) */}
           <View className="mb-5">
-            <Text className="text-gray-900 text-sm font-pretendard-bold mb-2">
+            <Text className="text-gray-900 text-base font-pretendard-bold mb-2">
               지원 동기 <Text className="text-red-500">*</Text>
             </Text>
             <TextInput
@@ -139,7 +140,7 @@ export default function TeamApplyScreen() {
 
           {/* 연락처 (필수) */}
           <View className="mb-5">
-            <Text className="text-gray-900 text-sm font-pretendard-bold mb-2">
+            <Text className="text-gray-900 text-base font-pretendard-bold mb-2">
               연락처 <Text className="text-red-500">*</Text>
             </Text>
             <TextInput
@@ -150,11 +151,16 @@ export default function TeamApplyScreen() {
               keyboardType="phone-pad"
               className="bg-gray-50 rounded-xl px-4 py-3 text-sm font-pretendard-regular text-gray-900"
             />
+            {contactNumber.trim().length > 0 && !isContactNumberValid && (
+              <Text className="text-red-500 ml-2 text-sm font-pretendard-medium mt-1.5">
+                정확한 전화번호를 입력해주세요
+              </Text>
+            )}
           </View>
 
           {/* 포트폴리오 URL (선택) */}
           <View className="mb-5">
-            <Text className="text-gray-900 text-sm font-pretendard-bold mb-2">
+            <Text className="text-gray-900 text-base font-pretendard-bold mb-2">
               포트폴리오 / GitHub URL{' '}
               <Text className="text-gray-400 font-pretendard-regular">(선택)</Text>
             </Text>

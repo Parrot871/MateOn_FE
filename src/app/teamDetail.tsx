@@ -29,6 +29,7 @@ import {
   type TeamOfferResponseDTO,
 } from '@/api/team';
 import { Back } from '@/assets/images/tool';
+import { getUnivByEmail } from '@/utils/univ';
 
 type State =
   | { status: 'loading' }
@@ -128,6 +129,9 @@ function TeamDetailContent({
   router: ReturnType<typeof useRouter>;
 }) {
   const additionalMembers = data.currentMemberCount - 1;
+  const leaderMetaLine = [getUnivByEmail(data.leaderEmail), data.leaderCollege, data.leaderMajor]
+    .filter(Boolean)
+    .join(' · ');
   const [aiLoading, setAiLoading] = useState(false);
 
   // 보낸 제안 목록 (팀장만)
@@ -264,7 +268,7 @@ function TeamDetailContent({
               </View>
             </View>
             <Text className="text-gray-500 text-base mt-1">
-              {data.leaderCollege} · {data.leaderMajor}
+              {leaderMetaLine}
             </Text>
           </View>
           <View className="items-end">
@@ -373,7 +377,7 @@ function TeamDetailContent({
                 {data.leaderName}
               </Text>
               <Text className="text-gray-400 text-sm mt-0.5">
-                {data.leaderCollege} · {data.leaderMajor}
+                {leaderMetaLine}
               </Text>
             </View>
             <View className="bg-gray-100 rounded-lg px-2.5 py-1">

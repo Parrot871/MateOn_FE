@@ -1,10 +1,16 @@
 // app/myApplicationDetail.tsx
-import { cancelApplication, getApplicationDetail, type Application, type ApplicationStatus } from '@/api/apply';
+import {
+  cancelApplication,
+  getApplicationDetail,
+  respondToApplication,
+  type Application,
+  type ApplicationStatus,
+} from '@/api/apply';
 import { Back } from '@/assets/images/tool';
 import { Image } from 'expo-image';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, Linking, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const STATUS_CONFIG: Record<
@@ -18,7 +24,7 @@ const STATUS_CONFIG: Record<
     dot: 'bg-blue-600',
   },
   APPROVED: {
-    label: '합류 확정',
+    label: '승인 확정',
     bg: 'bg-emerald-50/80',
     text: 'text-emerald-600',
     dot: 'bg-emerald-500',
@@ -38,6 +44,8 @@ export default function MyApplicationDetailScreen() {
   const [application, setApplication] = useState<Application | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [canceling, setCanceling] = useState(false);
+  const [responding, setResponding] = useState(false);
+  const [confirmAccepted, setConfirmAccepted] = useState<boolean | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -89,6 +97,28 @@ export default function MyApplicationDetailScreen() {
         },
       },
     ]);
+  };
+
+  const handleRespond = (accepted: boolean) => {
+    setConfirmAccepted(accepted);
+  };
+
+  const executeRespond = async () => {
+    if (!application || confirmAccepted === null) return;
+
+    const accepted = confirmAccepted;
+    setConfirmAccepted(null);
+
+    try {
+      setResponding(true);
+      const updated = await respondToApplication(application.applicationId, accepted);
+      setApplication(updated);
+    } catch (err) {
+      console.error('지원서 승인/거절 실패:', err);
+      Alert.alert('오류', err instanceof Error ? err.message : '처리에 실패했어요. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setResponding(false);
+    }
   };
 
   const status = application ? STATUS_CONFIG[application.status] : null;
@@ -194,7 +224,7 @@ export default function MyApplicationDetailScreen() {
             >
               {/* 지원 메시지 */}
               <View className="mb-4">
-                <Text className="text-xs font-pretendard-semibold text-gray-400 mb-2">
+                <Text className="text-sm font-pretendard-semibold text-gray-400 mb-2">
                   지원 동기
                 </Text>
                 <View className="bg-gray-50/80 p-3.5 rounded-2xl border border-gray-100/60">
@@ -207,7 +237,7 @@ export default function MyApplicationDetailScreen() {
               {/* 자기소개 */}
               {!!application.introduction && (
                 <View className="mb-2">
-                  <Text className="text-xs font-pretendard-semibold text-gray-400 mb-2">
+                  <Text className="text-sm font-pretendard-semibold text-gray-400 mb-2">
                     한 줄 소개
                   </Text>
                   <View className="bg-gray-50/80 p-3.5 rounded-2xl border border-gray-100/60">
@@ -230,32 +260,32 @@ export default function MyApplicationDetailScreen() {
                 shadowRadius: 8,
               }}
             >
-              <Text className="text-xs font-pretendard-semibold text-gray-400 mb-3">
+              <Text className="text-base font-pretendard-semibold text-gray-400 mb-3">
                 제출 정보
               </Text>
 
               {/* 연락처 */}
               <View className="flex-row items-center justify-between py-2.5 border-b border-gray-50">
-                <Text className="text-xs font-pretendard-medium text-gray-500">연락처</Text>
-                <Text className="text-sm font-pretendard-semibold text-gray-900">
+                <Text className="text-base font-pretendard-medium text-gray-500">연락처</Text>
+                <Text className="text-base font-pretendard-semibold text-gray-900">
                   {application.contactNumber || '-'}
                 </Text>
               </View>
 
               {/* 포트폴리오 */}
               <View className="flex-row items-center justify-between pt-2.5">
-                <Text className="text-xs font-pretendard-medium text-gray-500">포트폴리오</Text>
+                <Text className="text-base font-pretendard-medium text-gray-500">포트폴리오</Text>
                 {application.portfolioUrl ? (
                   <TouchableOpacity
                     onPress={() => Linking.openURL(application.portfolioUrl)}
                     activeOpacity={0.7}
                   >
-                    <Text className="text-sm font-pretendard-semibold text-blue-600 underline">
+                    <Text className="text-base font-pretendard-semibold text-blue-600 underline">
                       링크 열기 ↗
                     </Text>
                   </TouchableOpacity>
                 ) : (
-                  <Text className="text-sm font-pretendard text-gray-400">-</Text>
+                  <Text className="text-base font-pretendard text-gray-400">-</Text>
                 )}
               </View>
             </View>
@@ -263,8 +293,8 @@ export default function MyApplicationDetailScreen() {
         )}
       </ScrollView>
 
-      {/* Fixed Bottom Action Bar (PENDING 상태일 때만 출력) */}
-      {application?.status === 'PENDING' && (
+      {/* Fixed Bottom Action Bar (본인 지원서이면서 PENDING 상태일 때만 출력) */}
+      {application?.status === 'PENDING' && application.isMine && (
         <View
           className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-5 pt-3 flex-row gap-2.5"
           style={{ paddingBottom: Math.max(insets.bottom, 12) + 4 }}
@@ -295,6 +325,83 @@ export default function MyApplicationDetailScreen() {
           </TouchableOpacity>
         </View>
       )}
+
+      {/* Fixed Bottom Action Bar (팀장이 남의 지원서를 PENDING 상태로 볼 때만 출력) */}
+      {application?.status === 'PENDING' && !application.isMine && (
+        <View
+          className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-5 pt-3 flex-row gap-2.5"
+          style={{ paddingBottom: Math.max(insets.bottom, 12) + 4 }}
+        >
+          {/* 거절하기 */}
+          <TouchableOpacity
+            onPress={() => handleRespond(false)}
+            disabled={responding}
+            activeOpacity={0.8}
+            className="flex-1 h-12 rounded-2xl bg-red-100 items-center justify-center"
+          >
+            {responding ? (
+              <ActivityIndicator color="#6b7280" size="small" />
+            ) : (
+              <Text className="text-red-500 font-pretendard-semibold text-base">거절하기</Text>
+            )}
+          </TouchableOpacity>
+
+          {/* 승인하기 */}
+          <TouchableOpacity
+            onPress={() => handleRespond(true)}
+            disabled={responding}
+            activeOpacity={0.88}
+            className="flex-1 h-12 rounded-2xl bg-blue-600 items-center justify-center"
+          >
+            {responding ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text className="text-white font-pretendard-bold text-base">승인하기</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* 승인/거절 확인 모달 */}
+      <Modal
+        visible={confirmAccepted !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setConfirmAccepted(null)}
+      >
+        <View className="flex-1 bg-black/40 items-center justify-center px-10">
+          <View className="bg-white rounded-2xl w-full overflow-hidden">
+            <View className="px-5 pt-5 pb-4">
+              <Text className="text-gray-900 font-pretendard-bold text-base text-center mb-1.5">
+                {confirmAccepted ? '지원 승인' : '지원 거절'}
+              </Text>
+              <Text className="text-gray-500 font-pretendard text-sm text-center leading-5">
+                {confirmAccepted
+                  ? '승인하면 이 사용자가 팀원으로 합류하게 돼요.'
+                  : '거절하면 이 지원은 더 이상 되돌릴 수 없어요.'}
+              </Text>
+            </View>
+            <View className="flex-row border-t border-gray-100">
+              <TouchableOpacity
+                onPress={() => setConfirmAccepted(null)}
+                activeOpacity={0.7}
+                className="flex-1 py-3.5 items-center justify-center border-r border-gray-100"
+              >
+                <Text className="text-gray-500 font-pretendard-medium text-base">취소</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={executeRespond} activeOpacity={0.7} className="flex-1 py-3.5 items-center justify-center">
+                <Text
+                  className={`font-pretendard-semibold text-base ${
+                    confirmAccepted ? 'text-blue-600' : 'text-red-500'
+                  }`}
+                >
+                  {confirmAccepted ? '승인하기' : '거절하기'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

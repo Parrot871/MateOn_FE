@@ -1,11 +1,11 @@
-import type { EventItem } from '@/api/events';
+import { fetchRecommendedEvents, type EventItem } from '@/api/events';
 import { MypageMLogo, NotificationNewDot } from '@/assets/images/tool';
 import { EventCard } from '@/components/ui/EventCard';
 import TeamRecommendationCard from '@/components/ui/TeamRecommendationCard';
 import { useTeamRecStore } from '@/store/teamRecStore';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -29,36 +29,40 @@ const BANNERS = [
   { id: 'banner-2', image: require('@/assets/images/banner_activity.png'), path: '/activity' },
 ];
 
-const DUMMY_EVENTS: EventItem[] = [
-  {
-    id: 1,
-    title: '2026 창업경진대회',
-    category: 'CONTEST',
-    field: 'SCIENCE_ENGINEERING_TECH_IT',
-    fieldLabel: 'IT/개발',
-    organizer: '중소벤처기업부',
-    description: null,
-    summarizedDescription: null,
-    detailUrl: '',
-    imageUrl: null,
-    campusScope: 'ALL',
-    startDate: '2026-07-01',
-    endDate: '2026-07-30',
-    recommendedTargets: null,
-    targetColleges: null,
-    targetSchool: null,
-  },
-];
+type RecommendedEventsState =
+  | { status: 'loading' }
+  | { status: 'empty' }
+  | { status: 'error'; message: string }
+  | { status: 'ready'; events: EventItem[] };
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { teamRec, fetchTeamRec, hasHydrated } = useTeamRecStore();
+  const [recommendedEvents, setRecommendedEvents] = useState<RecommendedEventsState>({ status: 'loading' });
 
   useEffect(() => {
     if (!hasHydrated) return;
     fetchTeamRec();
   }, [hasHydrated, fetchTeamRec]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    fetchRecommendedEvents(controller.signal)
+      .then((events) => {
+        setRecommendedEvents(events.length ? { status: 'ready', events } : { status: 'empty' });
+      })
+      .catch((error) => {
+        if (error instanceof Error && error.name === 'AbortError') return;
+        setRecommendedEvents({
+          status: 'error',
+          message: error instanceof Error ? error.message : '맞춤 활동 추천을 불러오지 못했어요.',
+        });
+      });
+
+    return () => controller.abort();
+  }, []);
 
   return (
     <View className="flex-1 bg-white">
@@ -103,12 +107,33 @@ export default function HomeScreen() {
         </View>
 
         <View className="mb-8">
-          <Text className="text-black text-xl font-pretendard-bold mb-3">맞춤 공모전 추천</Text>
-          <View className="gap-3">
-            {DUMMY_EVENTS.map((event) => (
-              <EventCard key={event.id} item={event} />
-            ))}
-          </View>
+          <Text className="text-black text-xl font-pretendard-bold mb-3">맞춤 활동 추천</Text>
+
+          {recommendedEvents.status === 'loading' && (
+            <View className="items-center justify-center py-10">
+              <ActivityIndicator />
+            </View>
+          )}
+
+          {recommendedEvents.status === 'empty' && (
+            <View className="bg-gray-50 rounded-2xl p-5 items-center">
+              <Text className="text-gray-500">지금은 추천할 만한 활동이 없어요.</Text>
+            </View>
+          )}
+
+          {recommendedEvents.status === 'error' && (
+            <View className="bg-gray-50 rounded-2xl p-5 items-center">
+              <Text className="text-gray-500 mb-2">{recommendedEvents.message}</Text>
+            </View>
+          )}
+
+          {recommendedEvents.status === 'ready' && (
+            <View className="gap-3">
+              {recommendedEvents.events.map((event) => (
+                <EventCard key={event.id} item={event} />
+              ))}
+            </View>
+          )}
         </View>
 
         <View className="mb-8">

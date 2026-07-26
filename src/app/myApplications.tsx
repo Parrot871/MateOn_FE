@@ -189,7 +189,7 @@ export default function MyApplicationsScreen() {
         >
           {applications && applications.length > 0 && (
             <View className="mb-3 flex-row items-center justify-between px-1">
-              <Text className="text-[12px] font-pretendard-medium text-gray-400">
+              <Text className="text-[14px] font-pretendard-medium text-gray-400">
                 총 <Text className="text-blue-600 font-pretendard-bold">{applications.length}</Text>개의 지원 내역
               </Text>
             </View>
@@ -280,7 +280,7 @@ export default function MyApplicationsScreen() {
         >
           {offers && offers.length > 0 && (
             <View className="mb-3 flex-row items-center justify-between px-1">
-              <Text className="text-[12px] font-pretendard-medium text-gray-400">
+              <Text className="text-[14px] font-pretendard-medium text-gray-400">
                 총 <Text className="text-blue-600 font-pretendard-bold">{offers.length}</Text>개의 받은 제안
               </Text>
             </View>
@@ -325,7 +325,8 @@ export default function MyApplicationsScreen() {
             return (
               <View
                 key={offer.offerId}
-                className="bg-white border border-gray-100/80 rounded-3xl p-4 mb-3 shadow-sm"
+                className="bg-white border border-gray-100/80 rounded-3xl px-4 pt-4
+                 mb-3 shadow-sm"
                 style={{ elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8 }}
               >
                 <View className="flex-row justify-between items-center mb-3">
@@ -336,7 +337,7 @@ export default function MyApplicationsScreen() {
                   <Text className="text-[11px] text-gray-400 font-pretendard-medium">{formattedDate} 제안받음</Text>
                 </View>
 
-                <Text numberOfLines={1} className="text-base font-pretendard-bold text-gray-900 tracking-tight mb-1">
+                <Text numberOfLines={1} className="text-lg font-pretendard-bold text-gray-900 tracking-tight mb-1">
                   {offer.teamTitle}
                 </Text>
 
@@ -347,7 +348,7 @@ export default function MyApplicationsScreen() {
                 )}
 
                 {offer.message && (
-                  <Text numberOfLines={2} className="text-[12px] font-pretendard-medium text-gray-500 mb-3">
+                  <Text className="text-[13px] font-pretendard-light text-gray-500 mb-3">
                     “{offer.message}”
                   </Text>
                 )}

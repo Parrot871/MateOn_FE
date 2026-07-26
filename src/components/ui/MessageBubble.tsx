@@ -14,7 +14,7 @@ export function MessageBubble({ message, isMine }: Props) {
       <View className="px-4 mb-3 items-end">
         <View className="flex-row-reverse items-end">
           <View className="max-w-[75%] rounded-3xl rounded-tr-none px-4 py-2 bg-blue-500">
-            <Text className="text-white">{message.content}</Text>
+            <Text className="text-white text-lg">{message.content}</Text>
           </View>
           <Text className="text-[10px] text-gray-400 mr-1">
             {formatChatTime(message.createdAt)}

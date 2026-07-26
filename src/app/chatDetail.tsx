@@ -59,7 +59,7 @@ export default function ChatRoomScreen() {
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        keyboardVerticalOffset={0}
       >
         {isLoading ? (
           <ActivityIndicator className="mt-8" />
