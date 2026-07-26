@@ -1,16 +1,17 @@
 // app/notification/index.tsx
+import { getMyNotifications, type NotificationResponseDTO } from '@/api/notification';
 import { UserAddFill } from '@/assets/icons';
 import { X } from '@/assets/images/tool';
+import { useNotificationSSE } from '@/hooks/useNotificationSSE';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { useAnimatedReaction, useSharedValue, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
-// 삭제 버튼이 보이는 상태에서 왼쪽으로 한 번 더(더 깊이) 스와이프하면 자동 삭제된다.
 const DELETE_TRIGGER_TRANSLATION = -160;
 
 function DeleteAction({ translation, onDelete }: { translation: SharedValue<number>; onDelete: () => void }) {
@@ -35,93 +36,98 @@ function DeleteAction({ translation, onDelete }: { translation: SharedValue<numb
 
 const NOTI_TABS = ['전체', '가입신청', '가입요청', '메세지'] as const;
 type NotiTab = (typeof NOTI_TABS)[number];
+type NotiCategory = Exclude<NotiTab, '전체'>;
 
-type NotificationItem = {
-  id: string;
-  category: Exclude<NotiTab, '전체'>;
-  message: string;
-  timeAgo: string;
-};
+// title 문자열로 탭 카테고리 분류 (백엔드 type만으론 4개 탭을 구분 못 해서 title 기준)
+function categorize(title: string): NotiCategory {
+  if (title === '가입승인' || title === '가입거절') return '가입신청';
+  if (title === '팀 제안 도착' || title === '제안 거절' || title === '제안 수락') return '가입요청';
+  return '메세지'; // "OOO님의 메시지" 패턴 등 나머지
+}
 
-const MOCK_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: '1',
-    category: '가입신청',
-    message: '이지원님이 [데분 캠프] 데이터 분석 팀 1 모집에 지원했습니다',
-    timeAgo: '5분전',
-  },
-  {
-    id: '2',
-    category: '가입신청',
-    message: '이지원님이 [데분 캠프] 데이터 분석 팀 1 모집에 지원했습니다',
-    timeAgo: '5분전',
-  },
-  {
-    id: '3',
-    category: '가입신청',
-    message: '이지원님이 [데분 캠프] 데이터 분석 팀 1 모집에 지원했습니다',
-    timeAgo: '5분전',
-  },
-];
+function timeAgo(createdAt: string): string {
+  const diffMs = Date.now() - new Date(createdAt).getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return '방금전';
+  if (diffMin < 60) return `${diffMin}분전`;
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour}시간전`;
+  return `${Math.floor(diffHour / 24)}일전`;
+}
 
 export default function NotificationScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [tab, setTab] = useState<NotiTab>('전체');
-  const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<NotificationResponseDTO[]>([]);
+  const { notifications: sseNotifications } = useNotificationSSE();
 
-  const removeNotification = (id: string) => {
+  // 초기 목록 조회
+  useEffect(() => {
+    getMyNotifications().then(setNotifications).catch(console.error);
+  }, []);
+
+  // SSE로 새 알림 들어오면 앞에 merge (id 중복 방지)
+  useEffect(() => {
+    if (sseNotifications.length === 0) return;
+    setNotifications((prev) => {
+      const existingIds = new Set(prev.map((n) => n.id));
+      const newOnes = sseNotifications.filter((n) => !existingIds.has(n.id));
+      return [...newOnes, ...prev];
+    });
+  }, [sseNotifications]);
+
+  const removeNotification = (id: number) => {
     setNotifications((prev) => prev.filter((item) => item.id !== id));
   };
 
   const filteredItems =
     tab === '전체'
       ? notifications
-      : notifications.filter((item) => item.category === tab);
+      : notifications.filter((item) => categorize(item.title) === tab);
 
   return (
-    <View className="flex-1 bg-white" style={{ paddingTop: insets.top }}>
-      {/* 헤더 */}
-      <View className="flex-row items-center justify-between px-6 py-3">
-        <View style={{ width: 26, height: 26 }} />
-        <Text className="text-black text-2xl font-pretendard-bold">알림</Text>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Image source={X} style={{ width: 24, height: 24 }} contentFit="contain" />
-        </TouchableOpacity>
-      </View>
+    <View className="flex-1 bg-white">
+      {/* Header & Tabs Container */}
+      <View className="bg-white border-b border-gray-200">
+        {/* 헤더 */}
+        <View
+          className="px-5 flex-row items-center justify-between"
+          style={{ paddingTop: Math.max(insets.top, 16) + 6, paddingBottom: 14 }}
+        >
+          <View style={{ width: 26, height: 26 }} />
+          <Text className="text-black text-2xl font-pretendard-bold flex-1 text-center mr-8">알림</Text>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Image source={X} style={{ width: 24, height: 24 }} contentFit="contain" />
+          </TouchableOpacity>
+        </View>
 
-      {/* 탭 */}
-      <View className="flex-row px-5 border-b border-gray-100">
-        {NOTI_TABS.map((item) => {
-          const isActive = tab === item;
-          return (
-            <TouchableOpacity
-              key={item}
-              onPress={() => setTab(item)}
-              className="mr-5 pb-3"
-            >
-              <Text
-                className={`text-xl ${
-                  isActive
-                    ? 'text-black font-pretendard-bold'
-                    : 'text-gray-400 font-pretendard-semibold'
-                }`}
+        {/* 탭 */}
+        <View className="flex-row px-6 pt-3">
+          {NOTI_TABS.map((item) => {
+            const isActive = tab === item;
+            return (
+              <TouchableOpacity
+                key={item}
+                onPress={() => setTab(item)}
+                className="mr-6 pb-3"
+                style={{ borderBottomWidth: 2, borderBottomColor: isActive ? '#3E6AF4' : 'transparent' }}
               >
-                {item}
-              </Text>
-              {isActive && (
-                <View className="h-0.5 bg-black rounded-full mt-2" />
-              )}
-            </TouchableOpacity>
-          );
-        })}
+                <Text
+                  className={`text-lg ${
+                    isActive ? 'text-[#3E6AF4] font-pretendard-bold' : 'text-gray-400 font-pretendard-medium'
+                  }`}
+                >
+                  {item}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </View>
 
       {/* 리스트 */}
-      <ScrollView
-        className="flex-1"
-        contentContainerStyle={{ paddingBottom: 24 + insets.bottom }}
-      >
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 24 + insets.bottom }}>
         {filteredItems.length === 0 ? (
           <View className="items-center justify-center py-20">
             <Text className="text-gray-400 text-base">알림이 없습니다</Text>
@@ -138,17 +144,18 @@ export default function NotificationScreen() {
             >
               <TouchableOpacity className="flex-row items-start px-5 py-4 border-b border-gray-50 bg-white">
                 <View className="w-10 h-10 rounded-full bg-[#FCE9E9] items-center justify-center mr-3">
-                  <Image
-                    source={UserAddFill}
-                    style={{ width: 20, height: 20 }}
-                    contentFit="contain"
-                  />
+                  <Image source={UserAddFill} style={{ width: 20, height: 20 }} contentFit="contain" />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-base text-black font-pretendard-medium leading-5">
-                    {item.message}
+                  <View className="flex-row items-center justify-between">
+                    <Text className="text-base text-black font-pretendard-bold leading-5">
+                      {item.title}
+                    </Text>
+                    <Text className="text-sm text-gray-400 ml-2">{timeAgo(item.createdAt)}</Text>
+                  </View>
+                  <Text className="text-sm text-gray-500 font-pretendard-medium leading-5 mt-1">
+                    {item.content}
                   </Text>
-                  <Text className="text-sm text-gray-400 mt-1">{item.timeAgo}</Text>
                 </View>
               </TouchableOpacity>
             </Swipeable>

@@ -1,11 +1,14 @@
 import type { EventItem } from '@/api/events';
+import { getMyNotifications } from '@/api/notification';
+import { NotificationLine } from '@/assets/icons';
 import { MypageMLogo, NotificationNewDot } from '@/assets/images/tool';
 import { EventCard } from '@/components/ui/EventCard';
 import TeamRecommendationCard from '@/components/ui/TeamRecommendationCard';
+import { useNotificationSSE } from '@/hooks/useNotificationSSE';
 import { useTeamRecStore } from '@/store/teamRecStore';
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -54,11 +57,32 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { teamRec, fetchTeamRec, hasHydrated } = useTeamRecStore();
+  const [hasUnread, setHasUnread] = useState(false);
+  const { notifications: sseNotifications } = useNotificationSSE();
 
   useEffect(() => {
     if (!hasHydrated) return;
     fetchTeamRec();
   }, [hasHydrated, fetchTeamRec]);
+
+  // 홈 화면에 포커스될 때마다(알림 화면 갔다 돌아왔을 때 포함) 안 읽은 알림 여부 갱신
+  // 주의: 서버에 읽음 처리 API가 없어서, 여기서는 목록의 isRead 값만 그대로 반영한다.
+  // 즉 알림 화면에 들어갔다 나와도 서버 값이 안 바뀌므로 점이 계속 뜰 수 있다 —
+  // 읽음 처리 엔드포인트가 추가되면 그때 실제로 꺼지도록 연동 필요.
+  useFocusEffect(
+    useCallback(() => {
+      getMyNotifications()
+        .then((list) => setHasUnread(list.some((n) => !n.isRead)))
+        .catch(console.error);
+    }, [])
+  );
+
+  // 홈 화면이 떠있는 동안 SSE로 새 알림이 오면 즉시 점 표시
+  useEffect(() => {
+    if (sseNotifications.length > 0) {
+      setHasUnread(true);
+    }
+  }, [sseNotifications]);
 
   return (
     <View className="flex-1 bg-white">
@@ -72,7 +96,11 @@ export default function HomeScreen() {
             <Image source={MypageMLogo} style={{ width: 32, height: 32 }} contentFit="contain" />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => router.push('/notification')}>
-            <Image source={NotificationNewDot} style={{ width: 30, height: 30 }} contentFit="contain" />
+            <Image
+              source={hasUnread ? NotificationNewDot : NotificationLine}
+              style={{ width: 30, height: 30 }}
+              contentFit="contain"
+            />
           </TouchableOpacity>
         </View>
 
