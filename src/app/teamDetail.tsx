@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Modal,
+  Pressable,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -19,11 +21,14 @@ import {
 } from '@/api/apply';
 import {
   cancelTeamOffer,
+  completeTeamActivity,
+  deleteTeam,
   ForbiddenAccessError,
   getTeamDetail,
   getTeamOffers,
   OfferAlreadyRespondedError,
   ResourceNotFoundError,
+  TeamAlreadyEndedError,
   type OfferStatus,
   type TeamDetail,
   type TeamOfferResponseDTO,
@@ -40,6 +45,7 @@ export default function TeamDetailScreen() {
   const router = useRouter();
 
   const [state, setState] = useState<State>({ status: 'loading' });
+  const [menuVisible, setMenuVisible] = useState(false);
 
   const load = useCallback(
     async (isRefetch = false) => {
@@ -69,6 +75,61 @@ export default function TeamDetailScreen() {
     }, [load]),
   );
 
+  const handleEndActivity = () => {
+    Alert.alert(
+      '활동 종료',
+      '이 팀의 활동을 종료할까요? 종료 후에는 모집이 마감돼요.',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '종료하기',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await completeTeamActivity(Number(teamId));
+              await load(true);
+              Alert.alert('완료', '팀 활동이 종료되었어요.');
+            } catch (err) {
+              if (err instanceof TeamAlreadyEndedError) {
+                Alert.alert('알림', '이미 종료된 팀이에요.');
+                load(true);
+              } else if (err instanceof ForbiddenAccessError) {
+                Alert.alert('권한 없음', '이 팀의 팀장만 종료할 수 있어요.');
+              } else {
+                Alert.alert('오류', '활동 종료에 실패했어요. 잠시 후 다시 시도해주세요.');
+              }
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const handleDelete = () => {
+    Alert.alert('팀 삭제', '이 팀을 삭제할까요? 이 작업은 되돌릴 수 없어요.', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '삭제하기',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deleteTeam(Number(teamId));
+            router.back();
+          } catch (err) {
+            if (err instanceof ForbiddenAccessError) {
+              Alert.alert('권한 없음', '이 팀의 팀장만 삭제할 수 있어요.');
+            } else if (err instanceof ResourceNotFoundError) {
+              Alert.alert('알림', '이미 삭제되었거나 존재하지 않는 팀이에요.');
+              router.back();
+            } else {
+              Alert.alert('오류', '삭제에 실패했어요. 잠시 후 다시 시도해주세요.');
+            }
+          }
+        },
+      },
+    ]);
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
       <View className="flex-row items-center justify-between px-6 pt-2 pb-2 border-b border-gray-100">
@@ -76,8 +137,55 @@ export default function TeamDetailScreen() {
           <Image source={Back} style={{ width: 26, height: 26 }} contentFit="contain" />
         </TouchableOpacity>
         <Text className="text-black text-2xl font-pretendard-bold">팀 상세정보</Text>
-        <View style={{ width: 26, height: 26 }} />
+        {state.status === 'ready' && state.data.leader ? (
+          <TouchableOpacity onPress={() => setMenuVisible(true)}>
+            <Text className="text-2xl text-gray-700">⋯</Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 26, height: 26 }} />
+        )}
       </View>
+
+      <Modal
+        visible={menuVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMenuVisible(false)}
+      >
+        <Pressable className="flex-1 bg-black/30 justify-end" onPress={() => setMenuVisible(false)}>
+          <Pressable className="bg-white rounded-t-3xl pb-8" onPress={(e) => e.stopPropagation()}>
+            <TouchableOpacity
+              className="px-5 py-4 border-b border-gray-50"
+              onPress={() => {
+                setMenuVisible(false);
+                router.push(`/teamEdit?teamId=${teamId}`);
+              }}
+            >
+              <Text className="text-base font-pretendard-medium text-gray-900">모집글 수정하기</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              className="px-5 py-4 border-b border-gray-50"
+              onPress={() => {
+                setMenuVisible(false);
+                handleEndActivity();
+              }}
+            >
+              <Text className="text-base font-pretendard-medium text-gray-900">활동 종료하기</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              className="px-5 py-4"
+              onPress={() => {
+                setMenuVisible(false);
+                handleDelete();
+              }}
+            >
+              <Text className="text-base font-pretendard-medium text-red-500">모집글 삭제하기</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       {state.status === 'loading' && (
         <View className="flex-1 items-center justify-center">

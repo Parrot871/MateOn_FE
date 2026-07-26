@@ -1,4 +1,5 @@
 import { getMyApplications } from '@/api/apply';
+import { getMyTeams, getTeamReviewTargets } from '@/api/team';
 import { clearTokens } from '@/api/tokenStorage';
 import { getMyProfile, type UserProfile } from '@/api/user';
 import { Back, FlagIcon, MypageMLogo, NotificationNewDot, ProfileUser, Star, UserIcon } from '@/assets/images/tool';
@@ -56,11 +57,39 @@ function CircleProgress({
   );
 }
 
+// 내가 지원해 합류한(APPROVED) 팀 + 내가 리더로 모집한 팀의 teamId를 합쳐서
+// 종료(reviews/targets 조회 성공)된 팀 개수를 센다. teamReview.tsx의 로직과 동일한 기준.
+async function getReviewableTeamCount(): Promise<number> {
+  const [applications, myTeams] = await Promise.all([
+    getMyApplications().catch(() => []),
+    getMyTeams().catch(() => []),
+  ]);
+
+  const teamIds = Array.from(
+    new Set([
+      ...applications.filter((a) => a.status === 'APPROVED').map((a) => a.teamId),
+      ...myTeams.map((t) => t.id),
+    ])
+  );
+
+  const results = await Promise.all(
+    teamIds.map((id) =>
+      getTeamReviewTargets(id)
+        .then(() => true)
+        .catch(() => false)
+    )
+  );
+
+  return results.filter(Boolean).length;
+}
+
 export default function MypageScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [applicationCount, setApplicationCount] = useState(0);
+  const [myTeamCount, setMyTeamCount] = useState(0);
+  const [reviewableTeamCount, setReviewableTeamCount] = useState(0);
   const univ = getUnivByEmail(profile?.email);
 
   useFocusEffect(
@@ -72,14 +101,22 @@ export default function MypageScreen() {
       getMyApplications()
         .then((data) => setApplicationCount(data.length))
         .catch((error) => console.error('지원서 목록 조회 실패:', error));
+
+      getMyTeams()
+        .then((data) => setMyTeamCount(data.length))
+        .catch((error) => console.error('모집한 팀 목록 조회 실패:', error));
+
+      getReviewableTeamCount()
+        .then(setReviewableTeamCount)
+        .catch((error) => console.error('평가 대상 팀 개수 조회 실패:', error));
     }, [])
   );
 
   const ACTIVITIES = [
-  { label: '지원 및 제안', count: applicationCount, icon: UserIcon, path: '/myApplications' },
-  { label: '모집한 팀', count: 2, icon: FlagIcon, path: '/myteamLeader' },
-  { label: '팀원 평가', count: 2, icon: Star, path: '/teamReview' },
-] as const;
+    { label: '지원 및 제안', count: applicationCount, icon: UserIcon, path: '/myApplications' },
+    { label: '모집한 팀', count: myTeamCount, icon: FlagIcon, path: '/myteamLeader' },
+    { label: '팀원 평가', count: reviewableTeamCount, icon: Star, path: '/teamReview' },
+  ] as const;
 
   const SETTINGS = [
     { label: '학교 인증', onPress: () => {} },
@@ -180,7 +217,7 @@ export default function MypageScreen() {
       </View>
 
       <Text className="text-black text-xl font-pretendard-bold mb-1">계정 설정</Text>
-      
+
       <View className="border-t border-gray-100">
         {SETTINGS.map((setting, index) => (
           <TouchableOpacity
