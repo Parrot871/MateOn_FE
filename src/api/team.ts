@@ -646,3 +646,50 @@ export async function cancelTeamOffer(offerId: number): Promise<void> {
     throw new Error(message);
   }
 }
+type GetUserToTeamRecommendationReasonParams = {
+  teamId: number;
+};
+
+// 유저가 추천받은 특정 팀에 대한 상세 추천 이유를 조회할 때 사용
+export async function getUserToTeamRecommendationReason(
+  params: GetUserToTeamRecommendationReasonParams
+): Promise<string> {
+  const accessToken = await getAccessToken();
+
+  if (!accessToken) {
+    throw new Error('로그인이 필요합니다.');
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/matching/recommendations/reason/user-to-team`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ teamId: params.teamId }),
+    }
+  );
+
+  const text = await response.text();
+  const result: ApiResponse<{ reason: string }> | null = text ? JSON.parse(text) : null;
+
+  if (!response.ok || !result?.success) {
+    const message = result?.message || `추천 상세 이유 조회 실패: ${response.status}`;
+
+    if (response.status === 403 && message.includes('FORBIDDEN_ACCESS')) {
+      throw new ForbiddenAccessError(message);
+    }
+    if (response.status === 404 && message.includes('RECOMMENDATION_NOT_FOUND')) {
+      throw new RecommendationNotFoundError(message);
+    }
+    if (response.status === 502 || response.status === 503) {
+      throw new AiServerError(message);
+    }
+
+    throw new Error(message);
+  }
+
+  return result.data.reason;
+}

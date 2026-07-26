@@ -1,11 +1,16 @@
 import { fetchRecommendedEvents, type EventItem } from '@/api/events';
+import { getMyNotifications } from '@/api/notification';
+import { getMyTeams, type TeamPost } from '@/api/team';
+import { NotificationLine } from '@/assets/icons';
 import { MypageMLogo, NotificationNewDot } from '@/assets/images/tool';
 import { EventCard } from '@/components/ui/EventCard';
+import { MyTeamCard } from '@/components/ui/MyTeamCard';
 import TeamRecommendationCard from '@/components/ui/TeamRecommendationCard';
+import { useNotificationSSE } from '@/hooks/useNotificationSSE';
 import { useTeamRecStore } from '@/store/teamRecStore';
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -20,6 +25,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CARD_GAP = 12;
 const CARD_WIDTH = SCREEN_WIDTH * 0.8;
+const MY_TEAM_CARD_WIDTH = SCREEN_WIDTH * 0.75;
 
 const BANNER_WIDTH = SCREEN_WIDTH - 40;
 const BANNER_HEIGHT = BANNER_WIDTH / 3;
@@ -40,6 +46,12 @@ export default function HomeScreen() {
   const router = useRouter();
   const { teamRec, fetchTeamRec, hasHydrated } = useTeamRecStore();
   const [recommendedEvents, setRecommendedEvents] = useState<RecommendedEventsState>({ status: 'loading' });
+  const [hasUnread, setHasUnread] = useState(false);
+  const { notifications: sseNotifications } = useNotificationSSE();
+
+  // 내가 모집한 팀 현황
+  const [myTeams, setMyTeams] = useState<TeamPost[] | null>(null);
+  const [myTeamsError, setMyTeamsError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!hasHydrated) return;
@@ -64,6 +76,30 @@ export default function HomeScreen() {
     return () => controller.abort();
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      getMyNotifications()
+        .then((list) => setHasUnread(list.some((n) => !n.isRead)))
+        .catch(console.error);
+
+      getMyTeams()
+        .then((teams) => {
+          setMyTeams(teams);
+          setMyTeamsError(null);
+        })
+        .catch((err) => {
+          console.error('내 팀 목록 조회 실패:', err);
+          setMyTeamsError(err instanceof Error ? err.message : '목록을 불러오지 못했습니다.');
+        });
+    }, [])
+  );
+
+  useEffect(() => {
+    if (sseNotifications.length > 0) {
+      setHasUnread(true);
+    }
+  }, [sseNotifications]);
+
   return (
     <View className="flex-1 bg-white">
       <ScrollView
@@ -76,7 +112,11 @@ export default function HomeScreen() {
             <Image source={MypageMLogo} style={{ width: 32, height: 32 }} contentFit="contain" />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => router.push('/notification')}>
-            <Image source={NotificationNewDot} style={{ width: 30, height: 30 }} contentFit="contain" />
+            <Image
+              source={hasUnread ? NotificationNewDot : NotificationLine}
+              style={{ width: 30, height: 30 }}
+              contentFit="contain"
+            />
           </TouchableOpacity>
         </View>
 
@@ -105,6 +145,46 @@ export default function HomeScreen() {
             )}
           />
         </View>
+
+        {/* 내 팀 현황 — myTeams가 비어있으면 섹션 자체를 숨긴다 */}
+        {myTeams === null || myTeams.length > 0 ? (
+          <View className="mb-8">
+            <Text className="text-black text-xl font-pretendard-bold mb-3">내 팀 현황</Text>
+
+            {myTeams === null && !myTeamsError && (
+              <View className="items-center justify-center py-10">
+                <ActivityIndicator />
+              </View>
+            )}
+
+            {myTeamsError && (
+              <View className="bg-gray-50 rounded-2xl p-5 items-center">
+                <Text className="text-gray-500">{myTeamsError}</Text>
+              </View>
+            )}
+
+            {myTeams !== null && myTeams.length > 0 && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                decelerationRate="fast"
+                snapToInterval={MY_TEAM_CARD_WIDTH + CARD_GAP}
+                snapToAlignment="start"
+                contentContainerStyle={{ paddingRight: 20, gap: CARD_GAP }}
+                style={{ marginHorizontal: -20, paddingLeft: 20 }}
+              >
+                {myTeams.map((team) => (
+                  <View key={team.id} style={{ width: MY_TEAM_CARD_WIDTH }}>
+                    <MyTeamCard
+                      team={team}
+                      onPress={() => router.push({ pathname: '/teamDetail', params: { teamId: team.id } })}
+                    />
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+          </View>
+        ) : null}
 
         <View className="mb-8">
           <Text className="text-black text-xl font-pretendard-bold mb-3">맞춤 활동 추천</Text>
