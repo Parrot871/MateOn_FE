@@ -1,8 +1,10 @@
 import type { EventItem } from '@/api/events';
 import { getMyNotifications } from '@/api/notification';
+import { getMyTeams, type TeamPost } from '@/api/team';
 import { NotificationLine } from '@/assets/icons';
 import { MypageMLogo, NotificationNewDot } from '@/assets/images/tool';
 import { EventCard } from '@/components/ui/EventCard';
+import { MyTeamCard } from '@/components/ui/MyTeamCard';
 import TeamRecommendationCard from '@/components/ui/TeamRecommendationCard';
 import { useNotificationSSE } from '@/hooks/useNotificationSSE';
 import { useTeamRecStore } from '@/store/teamRecStore';
@@ -23,6 +25,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CARD_GAP = 12;
 const CARD_WIDTH = SCREEN_WIDTH * 0.8;
+const MY_TEAM_CARD_WIDTH = SCREEN_WIDTH * 0.75;
 
 const BANNER_WIDTH = SCREEN_WIDTH - 40;
 const BANNER_HEIGHT = BANNER_WIDTH / 3;
@@ -60,24 +63,33 @@ export default function HomeScreen() {
   const [hasUnread, setHasUnread] = useState(false);
   const { notifications: sseNotifications } = useNotificationSSE();
 
+  // 내가 모집한 팀 현황
+  const [myTeams, setMyTeams] = useState<TeamPost[] | null>(null);
+  const [myTeamsError, setMyTeamsError] = useState<string | null>(null);
+
   useEffect(() => {
     if (!hasHydrated) return;
     fetchTeamRec();
   }, [hasHydrated, fetchTeamRec]);
 
-  // 홈 화면에 포커스될 때마다(알림 화면 갔다 돌아왔을 때 포함) 안 읽은 알림 여부 갱신
-  // 주의: 서버에 읽음 처리 API가 없어서, 여기서는 목록의 isRead 값만 그대로 반영한다.
-  // 즉 알림 화면에 들어갔다 나와도 서버 값이 안 바뀌므로 점이 계속 뜰 수 있다 —
-  // 읽음 처리 엔드포인트가 추가되면 그때 실제로 꺼지도록 연동 필요.
   useFocusEffect(
     useCallback(() => {
       getMyNotifications()
         .then((list) => setHasUnread(list.some((n) => !n.isRead)))
         .catch(console.error);
+
+      getMyTeams()
+        .then((teams) => {
+          setMyTeams(teams);
+          setMyTeamsError(null);
+        })
+        .catch((err) => {
+          console.error('내 팀 목록 조회 실패:', err);
+          setMyTeamsError(err instanceof Error ? err.message : '목록을 불러오지 못했습니다.');
+        });
     }, [])
   );
 
-  // 홈 화면이 떠있는 동안 SSE로 새 알림이 오면 즉시 점 표시
   useEffect(() => {
     if (sseNotifications.length > 0) {
       setHasUnread(true);
@@ -129,6 +141,46 @@ export default function HomeScreen() {
             )}
           />
         </View>
+
+        {/* 내 팀 현황 — myTeams가 비어있으면 섹션 자체를 숨긴다 */}
+        {myTeams === null || myTeams.length > 0 ? (
+          <View className="mb-8">
+            <Text className="text-black text-xl font-pretendard-bold mb-3">내 팀 현황</Text>
+
+            {myTeams === null && !myTeamsError && (
+              <View className="items-center justify-center py-10">
+                <ActivityIndicator />
+              </View>
+            )}
+
+            {myTeamsError && (
+              <View className="bg-gray-50 rounded-2xl p-5 items-center">
+                <Text className="text-gray-500">{myTeamsError}</Text>
+              </View>
+            )}
+
+            {myTeams !== null && myTeams.length > 0 && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                decelerationRate="fast"
+                snapToInterval={MY_TEAM_CARD_WIDTH + CARD_GAP}
+                snapToAlignment="start"
+                contentContainerStyle={{ paddingRight: 20, gap: CARD_GAP }}
+                style={{ marginHorizontal: -20, paddingLeft: 20 }}
+              >
+                {myTeams.map((team) => (
+                  <View key={team.id} style={{ width: MY_TEAM_CARD_WIDTH }}>
+                    <MyTeamCard
+                      team={team}
+                      onPress={() => router.push({ pathname: '/teamDetail', params: { teamId: team.id } })}
+                    />
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+          </View>
+        ) : null}
 
         <View className="mb-8">
           <Text className="text-black text-xl font-pretendard-bold mb-3">맞춤 공모전 추천</Text>
