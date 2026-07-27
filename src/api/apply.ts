@@ -1,10 +1,8 @@
-// api/application.ts
 import type { ApiResponse } from './auth';
 import { getAccessToken } from './tokenStorage';
 import type { UserProfile } from './user';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
-
 
 export class MatchingIntentRequiredError extends Error {
   constructor(message: string) {
@@ -26,7 +24,6 @@ export class AiServerError extends Error {
     this.name = 'AiServerError';
   }
 }
-
 
 export class OfferAlreadyRespondedError extends Error {
   constructor(message: string) {
@@ -55,7 +52,6 @@ export class OfferForbiddenError extends Error {
     this.name = 'OfferForbiddenError';
   }
 }
-
 
 async function authenticatedFetch<T>(
   endpoint: string,
@@ -90,7 +86,6 @@ async function authenticatedFetch<T>(
   if (!response.ok || !result?.success) {
     const message = result?.message || `요청 실패: ${response.status}`;
 
-    // 커스텀 에러 분류
     if (response.status === 400 && message.includes('MATCHING_INTENT_REQUIRED')) {
       throw new MatchingIntentRequiredError(message);
     }
@@ -180,7 +175,7 @@ export type TeamOffer = {
 
 // ── API 함수 목록 ──────────────────────────────
 
-// 1. AI 지원 문구 초안
+// 1. AI 지원 지원 문구 초안
 export async function getUserToTeamProposalDraft(teamId: number) {
   const result = await authenticatedFetch<ProposalDraft>(
     '/api/matching/proposals/user-to-team',
@@ -265,7 +260,7 @@ export async function respondToOffer(offerId: number, accepted: boolean) {
   return result.data;
 }
 
-// 9. 팀에 온 지원서 목록 조회 (팀장용) — data 구조는 Application과 동일, isMine은 항상 false
+// 9. 팀에 온 지원서 목록 조회 (팀장용) 
 export async function getTeamApplications(teamId: number) {
   const result = await authenticatedFetch<Application[]>(
     `/api/teams/${teamId}/applications`
@@ -273,7 +268,7 @@ export async function getTeamApplications(teamId: number) {
   return result.data;
 }
 
-// 10. 지원서 승인/거절 처리 (팀장용) — isApproved=true면 승인, false면 거절
+// 10. 지원서 승인/거절 처리 (팀장용) 
 export async function respondToApplication(applicationId: number, isApproved: boolean) {
   const result = await authenticatedFetch<null>(
     `/api/teams/applications/${applicationId}?isApproved=${isApproved}`,

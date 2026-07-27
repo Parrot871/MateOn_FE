@@ -100,3 +100,59 @@ export async function changePassword(currentPassword: string, newPassword: strin
 
   return result.data;
 }
+
+export type ParticipatedActivity = {
+  id: number;
+  title: string;
+  category: string;
+};
+
+export type UserProfilePublic = {
+  userId: number;
+  name: string;
+  school: string | null;
+  campus: string | null;
+  college: string | null;
+  major: string | null;
+  grade: string | null;
+  tagline: string | null;
+  schoolVerified: boolean;
+  interestJobPrimary: string | null;
+  interestJobSecondary: string | null;
+  interestJobTertiary: string | null;
+  desiredRoles: string[];
+  skills: string[];
+  experienceLevel: string | null;
+  activityStyle: string | null;
+  collaborationTemperature: number | null;
+  collaborationReviewCount: number;
+  participatedActivities: ParticipatedActivity[];
+  isMe: boolean;
+};
+
+export class UserNotFoundError extends Error {}
+
+export async function getUserProfile(userId: number): Promise<UserProfilePublic> {
+  const accessToken = await getAccessToken();
+
+  if (!accessToken) {
+    throw new Error('로그인이 필요합니다.');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  const text = await response.text();
+  const result: ApiResponse<UserProfilePublic> | null = text ? JSON.parse(text) : null;
+
+  if (response.status === 404) {
+    throw new UserNotFoundError(result?.message || '존재하지 않는 사용자예요.');
+  }
+
+  if (!response.ok || !result?.success) {
+    throw new Error(result?.message || `프로필 조회 실패: ${response.status}`);
+  }
+
+  return result.data;
+}

@@ -3,6 +3,8 @@ import { getAccessToken } from './tokenStorage';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
+// ── API 함수 목록 ──────────────────────────────
+
 // 1. DM 방 조회 및 생성
 export type DmRoom = {
   roomId: number;
@@ -108,7 +110,6 @@ export async function markChatAsRead(
     }
     return true;
   } catch (e) {
-    // AbortController로 취소된 요청은 에러로 취급하지 않음
     if (e instanceof Error && e.name === 'AbortError') {
       return false;
     }
