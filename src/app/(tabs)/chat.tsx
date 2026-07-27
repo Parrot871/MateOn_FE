@@ -65,7 +65,11 @@ export default function ChatListScreen() {
               onPress={(roomId) =>
                 router.push({
                   pathname: '/chatDetail',
-                  params: { roomId: String(roomId), title: item.title },
+                  params: {
+                    roomId: String(roomId),
+                    title: item.title,
+                    partnerId: item.partnerId !== null ? String(item.partnerId) : undefined,
+                  },
                 })
               }
             />

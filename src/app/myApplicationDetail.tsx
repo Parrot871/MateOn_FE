@@ -2,7 +2,6 @@
 import {
   cancelApplication,
   getApplicationDetail,
-  respondToApplication,
   type Application,
   type ApplicationStatus,
 } from '@/api/apply';
@@ -44,8 +43,7 @@ export default function MyApplicationDetailScreen() {
   const [application, setApplication] = useState<Application | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [canceling, setCanceling] = useState(false);
-  const [responding, setResponding] = useState(false);
-  const [confirmAccepted, setConfirmAccepted] = useState<boolean | null>(null);
+  const [menuVisible, setMenuVisible] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -75,8 +73,15 @@ export default function MyApplicationDetailScreen() {
     }, [id])
   );
 
+  const handleEdit = () => {
+    if (!application) return;
+    setMenuVisible(false);
+    router.push({ pathname: '/myApplicationEdit', params: { id: application.applicationId } });
+  };
+
   const handleCancel = () => {
     if (!application) return;
+    setMenuVisible(false);
 
     Alert.alert('지원 취소', '정말 지원을 취소하시겠습니까?\n취소 후에는 복구할 수 없습니다.', [
       { text: '아니오', style: 'cancel' },
@@ -97,28 +102,6 @@ export default function MyApplicationDetailScreen() {
         },
       },
     ]);
-  };
-
-  const handleRespond = (accepted: boolean) => {
-    setConfirmAccepted(accepted);
-  };
-
-  const executeRespond = async () => {
-    if (!application || confirmAccepted === null) return;
-
-    const accepted = confirmAccepted;
-    setConfirmAccepted(null);
-
-    try {
-      setResponding(true);
-      const updated = await respondToApplication(application.applicationId, accepted);
-      setApplication(updated);
-    } catch (err) {
-      console.error('지원서 승인/거절 실패:', err);
-      Alert.alert('오류', err instanceof Error ? err.message : '처리에 실패했어요. 잠시 후 다시 시도해주세요.');
-    } finally {
-      setResponding(false);
-    }
   };
 
   const status = application ? STATUS_CONFIG[application.status] : null;
@@ -146,15 +129,28 @@ export default function MyApplicationDetailScreen() {
         >
           <Image source={Back} style={{ width: 26, height: 26 }} contentFit="contain" />
         </TouchableOpacity>
-        <Text className="text-gray-900 text-2xl font-pretendard-bold flex-1 text-center mr-8 tracking-tight">
+        <Text className="text-gray-900 text-2xl font-pretendard-bold flex-1 text-center tracking-tight">
           지원서 상세
         </Text>
+        {application?.status === 'PENDING' ? (
+          <TouchableOpacity
+            onPress={() => setMenuVisible(true)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            className="w-8 h-8 justify-center items-end"
+          >
+            <Text className="text-gray-900 font-pretendard-bold pt-2" style={{ fontSize: 26, lineHeight: 26 }}>
+              ⋮
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 26, height: 26 }} />
+        )}
       </View>
 
       <ScrollView
         className="flex-1"
         contentContainerClassName="p-5"
-        contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}
+        contentContainerStyle={{ paddingBottom: 32 + insets.bottom }}
         showsVerticalScrollIndicator={false}
       >
         {/* Loading */}
@@ -228,7 +224,7 @@ export default function MyApplicationDetailScreen() {
                   지원 동기
                 </Text>
                 <View className="bg-gray-50/80 p-3.5 rounded-2xl border border-gray-100/60">
-                  <Text className="text-sm font-pretendard text-gray-800 leading-relaxed">
+                  <Text className="text-base font-pretendard text-gray-800 leading-relaxed">
                     {application.message || '작성된 지원 메시지가 없습니다.'}
                   </Text>
                 </View>
@@ -241,7 +237,7 @@ export default function MyApplicationDetailScreen() {
                     한 줄 소개
                   </Text>
                   <View className="bg-gray-50/80 p-3.5 rounded-2xl border border-gray-100/60">
-                    <Text className="text-sm font-pretendard text-gray-800 leading-relaxed">
+                    <Text className="text-base font-pretendard text-gray-800 leading-relaxed">
                       {application.introduction}
                     </Text>
                   </View>
@@ -293,114 +289,29 @@ export default function MyApplicationDetailScreen() {
         )}
       </ScrollView>
 
-      {/* Fixed Bottom Action Bar (본인 지원서이면서 PENDING 상태일 때만 출력) */}
-      {application?.status === 'PENDING' && application.isMine && (
-        <View
-          className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-5 pt-3 flex-row gap-2.5"
-          style={{ paddingBottom: Math.max(insets.bottom, 12) + 4 }}
+      {/* 수정하기 / 삭제하기 드롭다운 메뉴 */}
+      <Modal visible={menuVisible} transparent animationType="fade" onRequestClose={() => setMenuVisible(false)}>
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => setMenuVisible(false)}
+          className="flex-1"
+          style={{ paddingTop: Math.max(insets.top, 16) + 50 }}
         >
-          {/* 지원 취소 */}
-          <TouchableOpacity
-            onPress={handleCancel}
-            disabled={canceling}
-            activeOpacity={0.8}
-            className="flex-1 h-12 rounded-2xl bg-gray-100 items-center justify-center"
-          >
-            {canceling ? (
-              <ActivityIndicator color="#6b7280" size="small" />
-            ) : (
-              <Text className="text-gray-600 font-pretendard-semibold text-sm">지원 취소</Text>
-            )}
-          </TouchableOpacity>
-
-          {/* 수정하기 */}
-          <TouchableOpacity
-            onPress={() =>
-              router.push({ pathname: '/myApplicationEdit', params: { id: application.applicationId } })
-            }
-            activeOpacity={0.88}
-            className="flex-2 h-12 rounded-2xl bg-blue-600 items-center justify-center flex-[2]"
-          >
-            <Text className="text-white font-pretendard-bold text-sm">지원서 수정</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* Fixed Bottom Action Bar (팀장이 남의 지원서를 PENDING 상태로 볼 때만 출력) */}
-      {application?.status === 'PENDING' && !application.isMine && (
-        <View
-          className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-5 pt-3 flex-row gap-2.5"
-          style={{ paddingBottom: Math.max(insets.bottom, 12) + 4 }}
-        >
-          {/* 거절하기 */}
-          <TouchableOpacity
-            onPress={() => handleRespond(false)}
-            disabled={responding}
-            activeOpacity={0.8}
-            className="flex-1 h-12 rounded-2xl bg-red-100 items-center justify-center"
-          >
-            {responding ? (
-              <ActivityIndicator color="#6b7280" size="small" />
-            ) : (
-              <Text className="text-red-500 font-pretendard-semibold text-base">거절하기</Text>
-            )}
-          </TouchableOpacity>
-
-          {/* 승인하기 */}
-          <TouchableOpacity
-            onPress={() => handleRespond(true)}
-            disabled={responding}
-            activeOpacity={0.88}
-            className="flex-1 h-12 rounded-2xl bg-blue-600 items-center justify-center"
-          >
-            {responding ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : (
-              <Text className="text-white font-pretendard-bold text-base">승인하기</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* 승인/거절 확인 모달 */}
-      <Modal
-        visible={confirmAccepted !== null}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setConfirmAccepted(null)}
-      >
-        <View className="flex-1 bg-black/40 items-center justify-center px-10">
-          <View className="bg-white rounded-2xl w-full overflow-hidden">
-            <View className="px-5 pt-5 pb-4">
-              <Text className="text-gray-900 font-pretendard-bold text-base text-center mb-1.5">
-                {confirmAccepted ? '지원 승인' : '지원 거절'}
-              </Text>
-              <Text className="text-gray-500 font-pretendard text-sm text-center leading-5">
-                {confirmAccepted
-                  ? '승인하면 이 사용자가 팀원으로 합류하게 돼요.'
-                  : '거절하면 이 지원은 더 이상 되돌릴 수 없어요.'}
-              </Text>
-            </View>
-            <View className="flex-row border-t border-gray-100">
-              <TouchableOpacity
-                onPress={() => setConfirmAccepted(null)}
-                activeOpacity={0.7}
-                className="flex-1 py-3.5 items-center justify-center border-r border-gray-100"
-              >
-                <Text className="text-gray-500 font-pretendard-medium text-base">취소</Text>
+          <View className="items-end px-3">
+            <View className="bg-white rounded-2xl w-36 overflow-hidden shadow-lg" style={{ elevation: 4 }}>
+              <TouchableOpacity onPress={handleEdit} activeOpacity={0.7} className="px-4 py-3.5 border-b border-gray-50">
+                <Text className="text-gray-900 font-pretendard-medium text-lg">수정하기</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={executeRespond} activeOpacity={0.7} className="flex-1 py-3.5 items-center justify-center">
-                <Text
-                  className={`font-pretendard-semibold text-base ${
-                    confirmAccepted ? 'text-blue-600' : 'text-red-500'
-                  }`}
-                >
-                  {confirmAccepted ? '승인하기' : '거절하기'}
-                </Text>
+              <TouchableOpacity onPress={handleCancel} disabled={canceling} activeOpacity={0.7} className="px-4 py-3.5">
+                {canceling ? (
+                  <ActivityIndicator color="#ef4444" size="small" />
+                ) : (
+                  <Text className="text-red-500 font-pretendard-medium text-lg">삭제하기</Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </TouchableOpacity>
       </Modal>
     </View>
   );

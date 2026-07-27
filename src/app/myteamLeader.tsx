@@ -2,8 +2,8 @@
 import { getMyTeams, type TeamPost } from "@/api/team";
 import { Back, UserIcon } from "@/assets/images/tool";
 import { Image } from "expo-image";
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -15,6 +15,7 @@ import {
 function isRecruitmentOpen(team: TeamPost): boolean {
   return (
     team.recruiting &&
+    team.currentMemberCount < team.capacity &&
     new Date(`${team.recruitmentEndDate}T23:59:59`) >= new Date()
   );
 }
@@ -26,14 +27,16 @@ export default function MyTeamLeaderScreen() {
   );
   const [teams, setTeams] = useState<TeamPost[]>([]);
 
-  useEffect(() => {
-    getMyTeams()
-      .then((data) => {
-        setTeams(data);
-        setStatus("ready");
-      })
-      .catch(() => setStatus("error"));
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      getMyTeams()
+        .then((data) => {
+          setTeams(data);
+          setStatus("ready");
+        })
+        .catch(() => setStatus("error"));
+    }, []),
+  );
 
   return (
     <View className="flex-1 bg-white">

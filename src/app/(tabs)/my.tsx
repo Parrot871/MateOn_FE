@@ -1,8 +1,9 @@
 import { getMyApplications } from '@/api/apply';
+import { fetchBookmarkedEventIds } from '@/api/events';
 import { getMyTeams, getTeamReviewTargets } from '@/api/team';
 import { clearTokens } from '@/api/tokenStorage';
 import { getMyProfile, type UserProfile } from '@/api/user';
-import { Back, FlagIcon, MypageMLogo, NotificationNewDot, ProfileUser, Star, UserIcon } from '@/assets/images/tool';
+import { Back, Bookmark, FlagIcon, MypageMLogo, NotificationNewDot, ProfileUser, Star, UserIcon } from '@/assets/images/tool';
 import { useTeamRecStore } from '@/store/teamRecStore';
 import { getUnivByEmail } from '@/utils/univ';
 import { Image } from 'expo-image';
@@ -90,6 +91,7 @@ export default function MypageScreen() {
   const [applicationCount, setApplicationCount] = useState(0);
   const [myTeamCount, setMyTeamCount] = useState(0);
   const [reviewableTeamCount, setReviewableTeamCount] = useState(0);
+  const [bookmarkCount, setBookmarkCount] = useState(0);
   const univ = getUnivByEmail(profile?.email);
 
   useFocusEffect(
@@ -109,12 +111,17 @@ export default function MypageScreen() {
       getReviewableTeamCount()
         .then(setReviewableTeamCount)
         .catch((error) => console.error('평가 대상 팀 개수 조회 실패:', error));
+
+      fetchBookmarkedEventIds()
+        .then((ids) => setBookmarkCount(ids.length))
+        .catch((error) => console.error('북마크 개수 조회 실패:', error));
     }, [])
   );
 
   const ACTIVITIES = [
     { label: '지원 및 제안', count: applicationCount, icon: UserIcon, path: '/myApplications' },
     { label: '모집한 팀', count: myTeamCount, icon: FlagIcon, path: '/myteamLeader' },
+    { label: '북마크', count: bookmarkCount, icon: Bookmark, path: '/myBookmarks' },
     { label: '팀원 평가', count: reviewableTeamCount, icon: Star, path: '/teamReview' },
   ] as const;
 
@@ -201,13 +208,14 @@ export default function MypageScreen() {
       </View>
 
       <Text className="text-black text-xl font-pretendard-bold mb-3">내 활동</Text>
-      <View className="flex-row gap-3 mb-8">
+      <View className="flex-row flex-wrap gap-3 mb-8">
         {ACTIVITIES.map((activity) => (
           <TouchableOpacity
             key={activity.label}
             disabled={!activity.path}
             onPress={() => activity.path && router.push(activity.path)}
-            className="flex-1 items-center py-5 rounded-xl border border-gray-200"
+            style={{ width: '31.3%' }}
+            className="items-center py-5 rounded-xl border border-gray-200"
           >
             <Image source={activity.icon} style={{ width: 22, height: 22 }} contentFit="contain" />
             <Text className="text-black font-pretendard-semibold mt-2 text-base">{activity.label}</Text>

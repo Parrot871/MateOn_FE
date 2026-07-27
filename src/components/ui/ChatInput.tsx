@@ -1,6 +1,6 @@
 // src/components/ui/ChatInput.tsx
 import { useState } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 interface Props {
   onSend: (text: string) => void;
@@ -16,17 +16,25 @@ export function ChatInput({ onSend }: Props) {
   };
 
   return (
-    <View className="flex-row h-20 items-center px-3 py-2 border-t border-gray-200 bg-white">
+    <View className="flex-row items-center gap-2 px-5 pt-3 pb-3 border-t border-gray-100 bg-white">
       <TextInput
-        className="flex-1 bg-gray-100 rounded-full px-4 py-3 mr-2 text-base"
-        placeholder="메세지를 입력해주세요"
-        placeholderTextColor="#9CA3AF"
         value={text}
         onChangeText={setText}
+        placeholder="메시지를 입력해주세요"
+        placeholderTextColor="#9CA3AF"
+        onSubmitEditing={handleSend}
+        returnKeyType="send"
+        className="flex-1 h-12 px-4 bg-gray-100 rounded-full text-black font-pretendard"
       />
-      <Pressable onPress={handleSend} className="px-3 py-2">
-        <Text className="text-blue-500 font-semibold text-base">전송</Text>
-      </Pressable>
+      <TouchableOpacity
+        onPress={handleSend}
+        disabled={!text.trim()}
+        className={`h-12 px-5 rounded-full justify-center items-center ${
+          text.trim() ? 'bg-[#3E6AF4]' : 'bg-[#3E6AF4]/40'
+        }`}
+      >
+        <Text className="text-white font-pretendard-semibold">전송</Text>
+      </TouchableOpacity>
     </View>
   );
-} 
+}

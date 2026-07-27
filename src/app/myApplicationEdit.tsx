@@ -35,7 +35,7 @@ function FormField({
 }) {
   return (
     <View className="mb-4">
-      <Text className="text-xs font-pretendard-semibold text-gray-400 mb-2">
+      <Text className="text-sm font-pretendard-semibold text-gray-400 mb-2">
         {label}
         {required && <Text className="text-red-500"> *</Text>}
       </Text>
@@ -46,7 +46,7 @@ function FormField({
         placeholderTextColor="#9CA3AF"
         multiline={multiline}
         textAlignVertical={multiline ? 'top' : 'center'}
-        className={`rounded-2xl border border-gray-100 bg-gray-50/80 px-4 font-pretendard text-sm text-gray-900 ${
+        className={`rounded-2xl border border-gray-100 bg-gray-50/80 px-4 font-pretendard text-base text-gray-900 ${
           multiline ? 'h-28 py-3.5 leading-relaxed' : 'h-12'
         }`}
       />
@@ -124,7 +124,7 @@ export default function MyApplicationEditScreen() {
         contactNumber: contactNumber.trim(),
         portfolioUrl: portfolioUrl.trim(),
       });
-      Alert.alert('완료', '지원서가 수정되었습니다.', [{ text: '확인', onPress: () => router.back() }]);
+      Alert.alert('수정 완료', '지원서가 수정되었습니다.', [{ text: '확인', onPress: () => router.back() }]);
     } catch (err) {
       console.error('지원서 수정 실패:', err);
       Alert.alert('오류', err instanceof Error ? err.message : '지원서 수정에 실패했습니다.');
@@ -248,7 +248,7 @@ export default function MyApplicationEditScreen() {
               {saving ? (
                 <ActivityIndicator color="#ffffff" size="small" />
               ) : (
-                <Text className="text-white font-pretendard-bold text-sm">저장하기</Text>
+                <Text className="text-white font-pretendard-bold text-base">저장하기</Text>
               )}
             </TouchableOpacity>
           </View>

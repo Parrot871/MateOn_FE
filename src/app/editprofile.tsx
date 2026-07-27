@@ -127,7 +127,7 @@ export default function EditProfileScreen() {
       </View>
 
       <ScrollView className="flex-1" contentContainerClassName="px-8 pb-10">
-        <Text className="text-black font-pretendard-semibold mb-2 text-xl">이름</Text>
+        <Text className="text-black font-pretendard-semibold mb-2 text-lg">이름</Text>
         <TextInput
           value={name}
           editable={false}
@@ -135,7 +135,7 @@ export default function EditProfileScreen() {
           className="h-12 px-1 mb-6 bg-white text-gray-400 border-b border-gray-300 font-pretendard text-lg"
         />
 
-        <Text className="text-black font-pretendard-semibold mb-2 text-xl">학교</Text>
+        <Text className="text-black font-pretendard-semibold mb-2 text-lg">학교</Text>
         <TextInput
           value={univ}
           editable={false}
@@ -146,7 +146,7 @@ export default function EditProfileScreen() {
         <View className={`relative mb-6 ${isTrackOpen ? 'z-20' : ''}`}>
           <View className="flex-row gap-2">
             <View className="flex-1">
-              <Text className="text-black font-pretendard-semibold mb-2 text-xl">계열</Text>
+              <Text className="text-black font-pretendard-semibold mb-2 text-lg">계열</Text>
               <TouchableOpacity
                 onPress={() => setIsTrackOpen((open) => !open)}
                 className="h-14 px-4 flex-row justify-between items-center bg-white rounded-xl border border-[#D8E1FD]"
@@ -161,7 +161,7 @@ export default function EditProfileScreen() {
             </View>
 
             <View className="flex-1">
-              <Text className="text-black font-pretendard-semibold mb-2 text-xl">학과</Text>
+              <Text className="text-black font-pretendard-semibold mb-2 text-lg">학과</Text>
               <TextInput
                 value={major}
                 onChangeText={setMajor}
@@ -187,7 +187,7 @@ export default function EditProfileScreen() {
           )}
         </View>
 
-        <Text className="text-black font-pretendard-semibold mt-2 mb-2 text-xl">희망 직무 1순위</Text>
+        <Text className="text-black font-pretendard-semibold mt-2 mb-2 text-lg">희망 직무 1순위</Text>
         <TextInput
           value={job1}
           onChangeText={setJob1}
@@ -197,7 +197,7 @@ export default function EditProfileScreen() {
           className="h-12 px-1 mb-4 bg-white text-black border-b border-black font-pretendard text-lg"
         />
 
-        <Text className="text-black font-pretendard-semibold mt-2 mb-2 text-xl">희망 직무 2순위</Text>
+        <Text className="text-black font-pretendard-semibold mt-2 mb-2 text-lg">희망 직무 2순위</Text>
         <TextInput
           value={job2}
           onChangeText={setJob2}
@@ -207,7 +207,7 @@ export default function EditProfileScreen() {
           className="h-12 px-1 mb-4 bg-white text-black border-b border-black font-pretendard text-lg"
         />
 
-        <Text className="text-black font-pretendard-semibold mt-2 mb-2 text-xl">희망 직무 3순위</Text>
+        <Text className="text-black font-pretendard-semibold mt-2 mb-2 text-lg">희망 직무 3순위</Text>
         <TextInput
           value={job3}
           onChangeText={setJob3}

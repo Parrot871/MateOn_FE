@@ -116,7 +116,7 @@ export default function TeamMembersDetailScreen() {
     const room = await createOrGetDmRoom(userId);
     router.push({
       pathname: '/chatDetail',
-      params: { roomId: String(room.roomId), title: params.name },
+      params: { roomId: String(room.roomId), title: params.name, partnerId: String(userId) },
     });
   } catch (error) {
     Alert.alert('오류', '대화방을 여는 데 실패했어요. 잠시 후 다시 시도해주세요.');

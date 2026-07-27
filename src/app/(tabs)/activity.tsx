@@ -1,6 +1,7 @@
 import { EVENT_FIELD_LABELS, fetchEvents, searchEvents, type EventCategory, type EventField, type EventItem } from '@/api/events';
 import { SearchLineBasic } from '@/assets/icons';
 import { EventCard } from '@/components/ui/EventCard';
+import { useBookmarkedEventIds } from '@/hooks/useBookmarkedEvents';
 import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -29,6 +30,7 @@ export default function ActivityScreen() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedKeyword, setDebouncedKeyword] = useState('');
+  const { bookmarkedIds, toggleBookmark } = useBookmarkedEventIds();
 
   useEffect(() => {
     const timeoutId = setTimeout(() => setDebouncedKeyword(searchQuery.trim()), 400);
@@ -151,7 +153,14 @@ export default function ActivityScreen() {
           {isFiltering && items.length === 0 ? (
             <Text className="text-gray-400 text-center mt-10 font-pretendard-medium">검색 결과가 없어요.</Text>
           ) : (
-            items.map((item) => <EventCard key={item.id} item={item} />)
+            items.map((item) => (
+              <EventCard
+                key={item.id}
+                item={item}
+                isBookmarked={bookmarkedIds.has(item.id)}
+                onToggleBookmark={toggleBookmark}
+              />
+            ))
           )}
         </ScrollView>
       )}

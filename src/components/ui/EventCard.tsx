@@ -3,7 +3,6 @@ import { Bookmark } from '@/assets/images/tool';
 import { useEventDetailStore } from '@/store/eventDetailStore';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 
 const CATEGORY_LABEL: Record<EventCategory, string> = {
@@ -15,10 +14,11 @@ const CATEGORY_LABEL: Record<EventCategory, string> = {
 
 interface EventCardProps {
   item: EventItem;
+  isBookmarked?: boolean;
+  onToggleBookmark?: (eventId: number, next: boolean) => void;
 }
 
-export function EventCard({ item }: EventCardProps) {
-  const [isBookmarked, setIsBookmarked] = useState(false);
+export function EventCard({ item, isBookmarked = false, onToggleBookmark }: EventCardProps) {
   const router = useRouter();
   const setSelectedEvent = useEventDetailStore((s) => s.setSelectedEvent);
 
@@ -30,7 +30,10 @@ export function EventCard({ item }: EventCardProps) {
       }}
       className="relative flex-row p-3 rounded-2xl border border-gray-200 gap-3"
     >
-      <TouchableOpacity onPress={() => setIsBookmarked((prev) => !prev)} className="absolute top-3 right-3 z-10">
+      <TouchableOpacity
+        onPress={() => onToggleBookmark?.(item.id, !isBookmarked)}
+        className="absolute top-3 right-3 z-10"
+      >
         <Image
           source={Bookmark}
           style={{ width: 20, height: 20 }}

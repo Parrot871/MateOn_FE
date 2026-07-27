@@ -194,6 +194,86 @@ export async function fetchRecommendedEvents(signal?: AbortSignal): Promise<Even
   return result.data;
 }
 
+export async function bookmarkEvent(eventId: number): Promise<void> {
+  const accessToken = await getAccessToken();
+
+  const response = await fetch(`${API_BASE_URL}/api/bookmarks/events/${eventId}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  const text = await response.text();
+  const result: ApiResponse<null> | null = text ? JSON.parse(text) : null;
+
+  if (!response.ok || !result?.success) {
+    throw new Error(result?.message || `북마크 등록 실패: ${response.status}`);
+  }
+}
+
+export async function unbookmarkEvent(eventId: number): Promise<void> {
+  const accessToken = await getAccessToken();
+
+  const response = await fetch(`${API_BASE_URL}/api/bookmarks/events/${eventId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  const text = await response.text();
+  const result: ApiResponse<null> | null = text ? JSON.parse(text) : null;
+
+  if (!response.ok || !result?.success) {
+    throw new Error(result?.message || `북마크 해제 실패: ${response.status}`);
+  }
+}
+
+export type FetchBookmarkedEventsParams = {
+  page?: number;
+  size?: number;
+};
+
+export async function fetchBookmarkedEvents(
+  params?: FetchBookmarkedEventsParams,
+  signal?: AbortSignal
+): Promise<EventItem[]> {
+  const accessToken = await getAccessToken();
+
+  const query = new URLSearchParams();
+  if (params?.page !== undefined) query.set('page', String(params.page));
+  if (params?.size !== undefined) query.set('size', String(params.size));
+
+  const response = await fetch(`${API_BASE_URL}/api/bookmarks/events?${query.toString()}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    signal,
+  });
+
+  const text = await response.text();
+  const result: ApiResponse<EventItem[]> | null = text ? JSON.parse(text) : null;
+
+  if (!response.ok || !result?.success) {
+    throw new Error(result?.message || `북마크 목록 조회 실패: ${response.status}`);
+  }
+
+  return result.data;
+}
+
+export async function fetchBookmarkedEventIds(signal?: AbortSignal): Promise<number[]> {
+  const accessToken = await getAccessToken();
+
+  const response = await fetch(`${API_BASE_URL}/api/bookmarks/events/ids`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    signal,
+  });
+
+  const text = await response.text();
+  const result: ApiResponse<number[]> | null = text ? JSON.parse(text) : null;
+
+  if (!response.ok || !result?.success) {
+    throw new Error(result?.message || `북마크 ID 목록 조회 실패: ${response.status}`);
+  }
+
+  return result.data;
+}
+
 export async function fetchEventDetail(id: number, signal?: AbortSignal): Promise<unknown> {
   const accessToken = await getAccessToken();
 

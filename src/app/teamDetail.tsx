@@ -5,13 +5,12 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
-  Pressable,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   AiServerError,
@@ -44,6 +43,7 @@ type State =
 export default function TeamDetailScreen() {
   const { teamId } = useLocalSearchParams<{ teamId: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const [state, setState] = useState<State>({ status: 'loading' });
   const [menuVisible, setMenuVisible] = useState(false);
@@ -115,13 +115,13 @@ export default function TeamDetailScreen() {
         onPress: async () => {
           try {
             await deleteTeam(Number(teamId));
-            router.back();
+            router.replace('/myteamLeader');
           } catch (err) {
             if (err instanceof ForbiddenAccessError) {
               Alert.alert('권한 없음', '이 팀의 팀장만 삭제할 수 있어요.');
             } else if (err instanceof ResourceNotFoundError) {
               Alert.alert('알림', '이미 삭제되었거나 존재하지 않는 팀이에요.');
-              router.back();
+              router.replace('/myteamLeader');
             } else {
               Alert.alert('오류', '삭제에 실패했어요. 잠시 후 다시 시도해주세요.');
             }
@@ -139,53 +139,65 @@ export default function TeamDetailScreen() {
         </TouchableOpacity>
         <Text className="text-black text-2xl font-pretendard-bold">팀 상세정보</Text>
         {state.status === 'ready' && state.data.leader ? (
-          <TouchableOpacity onPress={() => setMenuVisible(true)}>
-            <Text className="text-2xl text-gray-700">⋯</Text>
+          <TouchableOpacity
+            onPress={() => setMenuVisible(true)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            className="w-8 h-8 justify-center items-end"
+          >
+            <Text className="text-gray-900 font-pretendard-bold pt-2" style={{ fontSize: 26, lineHeight: 26 }}>
+              ⋮
+            </Text>
           </TouchableOpacity>
         ) : (
           <View style={{ width: 26, height: 26 }} />
         )}
       </View>
 
-      <Modal
-        visible={menuVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setMenuVisible(false)}
-      >
-        <Pressable className="flex-1 bg-black/30 justify-end" onPress={() => setMenuVisible(false)}>
-          <Pressable className="bg-white rounded-t-3xl pb-8" onPress={(e) => e.stopPropagation()}>
-            <TouchableOpacity
-              className="px-5 py-4 border-b border-gray-50"
-              onPress={() => {
-                setMenuVisible(false);
-                router.push(`/teamEdit?teamId=${teamId}`);
-              }}
-            >
-              <Text className="text-base font-pretendard-medium text-gray-900">모집글 수정하기</Text>
-            </TouchableOpacity>
+      {/* 모집글 수정하기 / 활동 종료하기 / 모집글 삭제하기 드롭다운 메뉴 */}
+      <Modal visible={menuVisible} transparent animationType="fade" onRequestClose={() => setMenuVisible(false)}>
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => setMenuVisible(false)}
+          className="flex-1"
+          style={{ paddingTop: Math.max(insets.top, 16) + 50 }}
+        >
+          <View className="items-end px-3">
+            <View className="bg-white rounded-2xl w-36 overflow-hidden shadow-lg" style={{ elevation: 4 }}>
+              <TouchableOpacity
+                onPress={() => {
+                  setMenuVisible(false);
+                  router.push(`/teamEdit?teamId=${teamId}`);
+                }}
+                activeOpacity={0.7}
+                className="px-4 py-3.5 border-b border-gray-50"
+              >
+                <Text className="text-gray-900 font-pretendard-medium text-lg">수정하기</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              className="px-5 py-4 border-b border-gray-50"
-              onPress={() => {
-                setMenuVisible(false);
-                handleEndActivity();
-              }}
-            >
-              <Text className="text-base font-pretendard-medium text-gray-900">활동 종료하기</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setMenuVisible(false);
+                  handleEndActivity();
+                }}
+                activeOpacity={0.7}
+                className="px-4 py-3.5 border-b border-gray-50"
+              >
+                <Text className="text-gray-900 font-pretendard-medium text-lg">활동 종료하기</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              className="px-5 py-4"
-              onPress={() => {
-                setMenuVisible(false);
-                handleDelete();
-              }}
-            >
-              <Text className="text-base font-pretendard-medium text-red-500">모집글 삭제하기</Text>
-            </TouchableOpacity>
-          </Pressable>
-        </Pressable>
+              <TouchableOpacity
+                onPress={() => {
+                  setMenuVisible(false);
+                  handleDelete();
+                }}
+                activeOpacity={0.7}
+                className="px-4 py-3.5"
+              >
+                <Text className="text-red-500 font-pretendard-medium text-lg">삭제하기</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
       </Modal>
 
       {state.status === 'loading' && (
@@ -237,6 +249,7 @@ function TeamDetailContent({
   router: ReturnType<typeof useRouter>;
 }) {
   const additionalMembers = data.currentMemberCount - 1;
+  const isRecruitingOpen = data.recruiting && data.currentMemberCount < data.capacity;
   const leaderMetaLine = [getUnivByEmail(data.leaderEmail), data.leaderCollege, data.leaderMajor]
     .filter(Boolean)
     .join(' · ');
@@ -461,19 +474,19 @@ function TeamDetailContent({
             </Text>
             <View
               className={
-                data.recruiting
+                isRecruitingOpen
                   ? 'bg-emerald-50 rounded-full px-3 py-1'
-                  : 'bg-gray-100 rounded-full px-3 py-1'
+                  : 'bg-red-100 rounded-full px-3 py-1'
               }
             >
               <Text
                 className={
-                  data.recruiting
+                  isRecruitingOpen
                     ? 'text-emerald-600 text-sm font-pretendard-bold'
-                    : 'text-gray-400 text-sm font-pretendard-bold'
+                    : 'text-red-500 text-sm font-pretendard-bold'
                 }
               >
-                {data.recruiting ? '모집 중' : '모집 마감'}
+                {isRecruitingOpen ? '모집 중' : '모집 마감'}
               </Text>
             </View>
           </View>

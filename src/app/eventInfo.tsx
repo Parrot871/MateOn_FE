@@ -1,7 +1,8 @@
 import { computeDDay, fetchEventDetail } from '@/api/events';
 import { getRecommendedTeams, type TeamRecommendation } from '@/api/team';
-import { Alarm, Back, DateIcon, Point } from '@/assets/images/tool';
+import { Alarm, Back, Bookmark, DateIcon, Point } from '@/assets/images/tool';
 import { GroupFill } from '@/assets/icons';
+import { useBookmarkedEventIds } from '@/hooks/useBookmarkedEvents';
 import { useEventDetailStore } from '@/store/eventDetailStore';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
@@ -38,6 +39,7 @@ export default function EventInfoScreen() {
   const [teams, setTeams] = useState<TeamRecommendation[]>([]);
   const [isLoadingTeams, setIsLoadingTeams] = useState(true);
   const [imageAspectRatio, setImageAspectRatio] = useState(1);
+  const { bookmarkedIds, toggleBookmark } = useBookmarkedEventIds();
 
   useEffect(() => {
     if (!event) return;
@@ -75,7 +77,18 @@ export default function EventInfoScreen() {
           <Image source={Back} style={{ width: 26, height: 26 }} contentFit="contain" />
         </TouchableOpacity>
         <Text className="text-black text-2xl font-pretendard-bold">활동 정보</Text>
-        <View style={{ width: 26, height: 26 }} />
+        <TouchableOpacity
+          onPress={() => toggleBookmark(event.id, !bookmarkedIds.has(event.id))}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          className="w-[26px] h-[26px] items-center justify-center"
+        >
+          <Image
+            source={Bookmark}
+            style={{ width: 22, height: 22 }}
+            contentFit="contain"
+            tintColor={bookmarkedIds.has(event.id) ? '#EF4444' : undefined}
+          />
+        </TouchableOpacity>
       </View>
 
       <ScrollView className="flex-1 px-5 pt-5" contentContainerStyle={{ paddingBottom: 32 }}>

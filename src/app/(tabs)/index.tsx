@@ -6,6 +6,7 @@ import { MypageMLogo, NotificationNewDot } from '@/assets/images/tool';
 import { EventCard } from '@/components/ui/EventCard';
 import { MyTeamCard } from '@/components/ui/MyTeamCard';
 import TeamRecommendationCard from '@/components/ui/TeamRecommendationCard';
+import { useBookmarkedEventIds } from '@/hooks/useBookmarkedEvents';
 import { useNotificationSSE } from '@/hooks/useNotificationSSE';
 import { useTeamRecStore } from '@/store/teamRecStore';
 import { Image } from 'expo-image';
@@ -48,6 +49,7 @@ export default function HomeScreen() {
   const [recommendedEvents, setRecommendedEvents] = useState<RecommendedEventsState>({ status: 'loading' });
   const [hasUnread, setHasUnread] = useState(false);
   const { notifications: sseNotifications } = useNotificationSSE();
+  const { bookmarkedIds, toggleBookmark } = useBookmarkedEventIds();
 
   // 내가 모집한 팀 현황
   const [myTeams, setMyTeams] = useState<TeamPost[] | null>(null);
@@ -210,7 +212,12 @@ export default function HomeScreen() {
           {recommendedEvents.status === 'ready' && (
             <View className="gap-3">
               {recommendedEvents.events.map((event) => (
-                <EventCard key={event.id} item={event} />
+                <EventCard
+                  key={event.id}
+                  item={event}
+                  isBookmarked={bookmarkedIds.has(event.id)}
+                  onToggleBookmark={toggleBookmark}
+                />
               ))}
             </View>
           )}
