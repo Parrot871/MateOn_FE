@@ -18,6 +18,10 @@ export interface NotificationResponseDTO {
 export async function getMyNotifications(): Promise<NotificationResponseDTO[]> {
   const accessToken = await getAccessToken();
 
+  if (!accessToken) {
+    throw new Error('로그인이 필요합니다.');
+  }
+
   const res = await fetch(`${API_BASE_URL}/api/notifications`, {
     method: "GET",
     headers: {

@@ -82,7 +82,10 @@ export async function getRecommendedTeams(params?: GetRecommendedTeamsParams) {
   const result: ApiResponse<TeamRecommendation[]> | null = text ? JSON.parse(text) : null;
 
   if (!response.ok || !result?.success) {
-    if (response.status === 400 && result?.message?.includes('MATCHING_INTENT_REQUIRED')) {
+    if (
+      response.status === 400 &&
+      (result?.message?.includes('MATCHING_INTENT_REQUIRED') || result?.message?.includes('매칭 의도'))
+    ) {
       throw new MatchingIntentRequiredError(result.message);
     }
     throw new Error(result?.message || `팀 추천 조회 실패: ${response.status}`);
@@ -331,7 +334,13 @@ export async function createTeamRecruitment(payload: TeamRequestPayload) {
   const result: ApiResponse<TeamDetail> | null = text ? JSON.parse(text) : null;
 
   if (!response.ok || !result?.success) {
-    throw new Error(result?.message || `팀 모집글 등록 실패: ${response.status}`);
+    const message = result?.message || `팀 모집글 등록 실패: ${response.status}`;
+
+    if (message.includes('SCHOOL_NOT_VERIFIED')) {
+      throw new SchoolNotVerifiedError(message);
+    }
+
+    throw new Error(message);
   }
 
   return result.data;

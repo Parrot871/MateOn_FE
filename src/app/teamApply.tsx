@@ -15,7 +15,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Back } from '@/assets/images/tool';
 
-import { submitTeamApplication } from '@/api/apply';
+import { SchoolNotVerifiedError, submitTeamApplication } from '@/api/apply';
+import { useSchoolVerified } from '@/hooks/useSchoolVerified';
 import { useTeamRecStore } from '@/store/teamRecStore';
 
 export default function TeamApplyScreen() {
@@ -35,13 +36,14 @@ export default function TeamApplyScreen() {
   const [contactNumber, setContactNumber] = useState('');
   const [portfolioUrl, setPortfolioUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const schoolVerified = useSchoolVerified();
 
   // AI 초안을 받아서 들어온 경우인지 (안내 배너 표시용)
   const isFromAI = !!initialMessage;
 
   const isContactNumberValid = contactNumber.replace(/\D/g, '').length === 11;
 
-  const canSubmit = message.trim().length > 0 && isContactNumberValid && !submitting;
+  const canSubmit = message.trim().length > 0 && isContactNumberValid && !submitting && schoolVerified;
 
   const handleSubmit = async () => {
     if (submitting) return;
@@ -71,10 +73,17 @@ export default function TeamApplyScreen() {
         { text: '확인', onPress: () => router.back() },
       ]);
     } catch (err) {
-      Alert.alert(
-        '오류',
-        err instanceof Error ? err.message : '지원서 제출에 실패했어요. 잠시 후 다시 시도해주세요.',
-      );
+      if (err instanceof SchoolNotVerifiedError) {
+        Alert.alert('재학생 인증이 필요해요', '지원하려면 먼저 재학생 인증을 완료해주세요.', [
+          { text: '취소', style: 'cancel' },
+          { text: '인증하러 가기', onPress: () => router.push('/schoolVerify') },
+        ]);
+      } else {
+        Alert.alert(
+          '오류',
+          err instanceof Error ? err.message : '지원서 제출에 실패했어요. 잠시 후 다시 시도해주세요.',
+        );
+      }
     } finally {
       setSubmitting(false);
     }

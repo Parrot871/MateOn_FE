@@ -1,4 +1,6 @@
 // components/ChatListItem.tsx
+import { ProfileUser } from '@/assets/images/tool';
+import { Image } from 'expo-image';
 import { Pressable, Text, View } from 'react-native';
 import type { ChatRoom } from '../../types/chat';
 import { formatChatTime } from '../../utils/formatChatTime';
@@ -14,7 +16,9 @@ export function ChatListItem({ room, onPress }: ChatListItemProps) {
       onPress={() => onPress?.(room.roomId)}
       className="flex-row items-center px-4 py-3"
     >
-      <View className="w-10 h-10 rounded-full bg-gray-100 mr-3" />
+      <View className="w-14 h-14 rounded-full bg-gray-100 mr-3 items-center justify-center overflow-hidden">
+        <Image source={ProfileUser} style={{ width: 25, height: 25 }} contentFit="contain" />
+      </View>
 
       <View className="flex-1">
         <Text className="font-pretendard-semibold text-lg">{room.title}</Text>

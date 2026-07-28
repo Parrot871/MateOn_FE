@@ -1,4 +1,4 @@
-import { saveTokens } from './tokenStorage';
+import { getAccessToken, saveTokens } from './tokenStorage';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
@@ -13,10 +13,18 @@ type AuthTokens = {
   refreshToken: string;
 };
 
+async function authHeaders() {
+  const accessToken = await getAccessToken();
+  return {
+    'Content-Type': 'application/json',
+    ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+  };
+}
+
 export async function requestEmailCode(email: string) {
   const response = await fetch(`${API_BASE_URL}/api/auth/email/request`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: await authHeaders(),
     body: JSON.stringify({ email }),
   });
 
@@ -32,7 +40,7 @@ export async function requestEmailCode(email: string) {
 export async function verifyEmailCode(email: string, code: string) {
   const response = await fetch(`${API_BASE_URL}/api/auth/email/verify`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: await authHeaders(),
     body: JSON.stringify({ email, code }),
   });
 

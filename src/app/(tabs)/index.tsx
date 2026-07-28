@@ -1,6 +1,7 @@
 import { fetchRecommendedEvents, type EventItem } from '@/api/events';
 import { getMyNotifications } from '@/api/notification';
 import { getMyTeams, type TeamPost } from '@/api/team';
+import { getAccessToken } from '@/api/tokenStorage';
 import { NotificationLine } from '@/assets/icons';
 import { MypageMLogo, NotificationNewDot } from '@/assets/images/tool';
 import { EventCard } from '@/components/ui/EventCard';
@@ -80,19 +81,23 @@ export default function HomeScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      getMyNotifications()
-        .then((list) => setHasUnread(list.some((n) => !n.isRead)))
-        .catch(console.error);
+      getAccessToken().then((token) => {
+        if (!token) return;
 
-      getMyTeams()
-        .then((teams) => {
-          setMyTeams(teams);
-          setMyTeamsError(null);
-        })
-        .catch((err) => {
-          console.error('내 팀 목록 조회 실패:', err);
-          setMyTeamsError(err instanceof Error ? err.message : '목록을 불러오지 못했습니다.');
-        });
+        getMyNotifications()
+          .then((list) => setHasUnread(list.some((n) => !n.isRead)))
+          .catch(console.error);
+
+        getMyTeams()
+          .then((teams) => {
+            setMyTeams(teams);
+            setMyTeamsError(null);
+          })
+          .catch((err) => {
+            console.error('내 팀 목록 조회 실패:', err);
+            setMyTeamsError(err instanceof Error ? err.message : '목록을 불러오지 못했습니다.');
+          });
+      });
     }, [])
   );
 
@@ -240,7 +245,7 @@ export default function HomeScreen() {
 
           {teamRec.status === 'error' && (
             <View className="bg-gray-50 rounded-2xl p-5 items-center">
-              <Text className="text-gray-500 mb-2">{teamRec.message}</Text>
+              <Text className="text-gray-500 mb-2">드림이 챗봇에서 먼저 의도 추출 검사를 해주세요.</Text>
             </View>
           )}
 

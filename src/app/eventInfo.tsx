@@ -1,8 +1,9 @@
 import { computeDDay, fetchEventDetail } from '@/api/events';
-import { getRecommendedTeams, type TeamRecommendation } from '@/api/team';
+import { getRecommendedTeams, MatchingIntentRequiredError, type TeamRecommendation } from '@/api/team';
 import { Alarm, Back, Bookmark, DateIcon, Point } from '@/assets/images/tool';
 import { GroupFill } from '@/assets/icons';
 import { useBookmarkedEventIds } from '@/hooks/useBookmarkedEvents';
+import { useSchoolVerified } from '@/hooks/useSchoolVerified';
 import { useEventDetailStore } from '@/store/eventDetailStore';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
@@ -38,8 +39,10 @@ export default function EventInfoScreen() {
 
   const [teams, setTeams] = useState<TeamRecommendation[]>([]);
   const [isLoadingTeams, setIsLoadingTeams] = useState(true);
+  const [needsMatchingIntent, setNeedsMatchingIntent] = useState(false);
   const [imageAspectRatio, setImageAspectRatio] = useState(1);
   const { bookmarkedIds, toggleBookmark } = useBookmarkedEventIds();
+  const schoolVerified = useSchoolVerified();
 
   useEffect(() => {
     if (!event) return;
@@ -49,7 +52,14 @@ export default function EventInfoScreen() {
 
     getRecommendedTeams({ eventId: event.id })
       .then(setTeams)
-      .catch(() => setTeams([]))
+      .catch((error) => {
+        if (error instanceof MatchingIntentRequiredError) {
+          setNeedsMatchingIntent(true);
+        } else {
+          console.warn('[getRecommendedTeams] 실패', error);
+        }
+        setTeams([]);
+      })
       .finally(() => setIsLoadingTeams(false));
   }, [event]);
 
@@ -136,17 +146,26 @@ export default function EventInfoScreen() {
           <Text className="text-gray-700 font-pretendard-bold text-base">상세 페이지 보기</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={() =>
-            router.push({
-              pathname: '/teamRecruit',
-              params: { eventId: String(event.id), eventTitle: event.title },
-            })
-          }
-          className="mt-3 py-4 rounded-xl bg-indigo-600 items-center"
-        >
-          <Text className="text-white font-pretendard-bold text-base">이 활동으로 팀 만들기</Text>
-        </TouchableOpacity>
+        {schoolVerified ? (
+          <TouchableOpacity
+            onPress={() =>
+              router.push({
+                pathname: '/teamRecruit',
+                params: { eventId: String(event.id), eventTitle: event.title },
+              })
+            }
+            className="mt-3 py-4 rounded-xl bg-indigo-600 items-center"
+          >
+            <Text className="text-white font-pretendard-bold text-base">이 활동으로 팀 만들기</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            onPress={() => router.push('/schoolVerify')}
+            className="mt-3 py-4 rounded-xl bg-gray-100 items-center"
+          >
+            <Text className="text-gray-400 font-pretendard-bold text-base">학교 인증하고 팀 만들기</Text>
+          </TouchableOpacity>
+        )}
 
         <View className="flex-row items-center gap-1.5 mt-8 mb-3">
           <Image source={Point} style={{ width: 18, height: 18 }} contentFit="contain" />
@@ -157,6 +176,20 @@ export default function EventInfoScreen() {
           <View className="py-10 items-center">
             <ActivityIndicator color="#4F46E5" />
           </View>
+        ) : !schoolVerified ? (
+          <TouchableOpacity
+            onPress={() => router.push('/schoolVerify')}
+            className="py-10 items-center bg-gray-50 rounded-xl"
+          >
+            <Text className="text-gray-400 font-pretendard-medium">학교 인증하고 팀 지원하기</Text>
+          </TouchableOpacity>
+        ) : needsMatchingIntent ? (
+          <TouchableOpacity
+            onPress={() => router.push('/chatbot')}
+            className="py-10 items-center bg-gray-50 rounded-xl"
+          >
+            <Text className="text-gray-400 font-pretendard-medium">매칭 의도를 설정하면 추천 팀을 볼 수 있어요</Text>
+          </TouchableOpacity>
         ) : teams.length === 0 ? (
           <View className="py-10 items-center bg-gray-50 rounded-xl">
             <Text className="text-gray-400 font-pretendard-medium">아직 모집중인 팀이 없어요.</Text>

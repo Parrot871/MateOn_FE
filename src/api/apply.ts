@@ -91,7 +91,7 @@ async function authenticatedFetch<T>(
     const message = result?.message || `요청 실패: ${response.status}`;
 
     // 커스텀 에러 분류
-    if (response.status === 400 && message.includes('MATCHING_INTENT_REQUIRED')) {
+    if (response.status === 400 && (message.includes('MATCHING_INTENT_REQUIRED') || message.includes('매칭 의도'))) {
       throw new MatchingIntentRequiredError(message);
     }
     if (

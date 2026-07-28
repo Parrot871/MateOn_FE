@@ -65,10 +65,22 @@ export default function MyTeamLeaderScreen() {
           </Text>
         </View>
       ) : teams.length === 0 ? (
-        <View className="flex-1 items-center justify-center px-8 pb-20">
-          <Text className="text-gray-400 font-pretendard text-base">
-            아직 모집한 팀이 없어요.
-          </Text>
+        <View className="flex-1 px-5 pb-20">
+          <View className="pt-20 py-10 items-center justify-center bg-white rounded-3xl p-8 border border-gray-100">
+            <View className="w-12 h-12 rounded-2xl bg-gray-50 border border-gray-100 justify-center items-center mb-3">
+              <Text className="text-xl">📄</Text>
+            </View>
+            <Text className="text-gray-900 font-pretendard-bold text-lg mb-1">아직 모집한 팀이 없어요</Text>
+            <Text className="text-gray-400 font-pretendard text-sm text-center mb-5">
+              관심 있는 공모전이나 활동으로 팀을 모집해보세요.
+            </Text>
+            <TouchableOpacity
+              onPress={() => router.push('/activity')}
+              className="bg-blue-600 px-4 py-2.5 rounded-xl active:opacity-90"
+            >
+              <Text className="text-white font-pretendard-semibold text-sm">활동 탐색하러 가기</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       ) : (
         <ScrollView

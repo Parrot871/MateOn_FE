@@ -33,6 +33,7 @@ import {
   type TeamOfferResponseDTO,
 } from '@/api/team';
 import { Back } from '@/assets/images/tool';
+import { useSchoolVerified } from '@/hooks/useSchoolVerified';
 import { getUnivByEmail } from '@/utils/univ';
 
 type State =
@@ -254,6 +255,7 @@ function TeamDetailContent({
     .filter(Boolean)
     .join(' · ');
   const [aiLoading, setAiLoading] = useState(false);
+  const schoolVerified = useSchoolVerified();
 
   // 보낸 제안 목록 (팀장만)
   const [offers, setOffers] = useState<TeamOfferResponseDTO[] | null>(null);
@@ -609,6 +611,14 @@ function TeamDetailContent({
               지원 완료
             </Text>
           </View>
+        ) : !schoolVerified ? (
+          <TouchableOpacity
+            activeOpacity={0.8}
+            className="bg-gray-100 rounded-xl py-4 items-center"
+            onPress={() => router.push('/schoolVerify')}
+          >
+            <Text className="text-gray-400 font-pretendard-bold text-base">학교 인증하고 지원하기</Text>
+          </TouchableOpacity>
         ) : (
           <>
             {data.recruiting && (

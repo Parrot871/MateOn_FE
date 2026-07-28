@@ -72,7 +72,7 @@ export default function EditProfileScreen() {
     getMyProfile()
       .then((profile) => {
         setName(profile.name ?? '');
-        setUniv(getUnivByEmail(profile.email) ?? '');
+        setUniv(profile.schoolVerified ? getUnivByEmail(profile.email) ?? '' : '');
         setTrack(profile.college ?? null);
         setMajor(profile.major ?? '');
         setJob1(profile.interestJobPrimary ?? '');
@@ -130,14 +130,16 @@ export default function EditProfileScreen() {
         <Text className="text-black font-pretendard-semibold mb-2 text-lg">이름</Text>
         <TextInput
           value={name}
-          editable={false}
+          onChangeText={setName}
+          placeholder="이름을 입력해주세요"
+          placeholderTextColor="#9CA3AF"
           style={{ verticalAlign: 'middle' }}
-          className="h-12 px-1 mb-6 bg-white text-gray-400 border-b border-gray-300 font-pretendard text-lg"
+          className="h-12 px-1 mb-6 bg-white text-black border-b border-black font-pretendard text-lg"
         />
 
         <Text className="text-black font-pretendard-semibold mb-2 text-lg">학교</Text>
         <TextInput
-          value={univ}
+          value={univ || '재학생 인증이 필요합니다.'}
           editable={false}
           style={{ verticalAlign: 'middle' }}
           className="h-12 px-1 mb-6 bg-white text-gray-400 border-b border-gray-300 font-pretendard text-lg"

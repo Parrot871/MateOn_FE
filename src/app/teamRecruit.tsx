@@ -1,6 +1,7 @@
 import { Back, DateIcon, X } from '@/assets/images/tool';
 import { fetchEvents, type EventCategory, type EventItem } from '@/api/events';
-import { createTeamRecruitment } from '@/api/team';
+import { createTeamRecruitment, SchoolNotVerifiedError } from '@/api/team';
+import { useSchoolVerified } from '@/hooks/useSchoolVerified';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -174,6 +175,7 @@ function ActivityPickerModal({
 
 export default function TeamRecruitScreen() {
   const router = useRouter();
+  const schoolVerified = useSchoolVerified();
   const { eventId, eventTitle } = useLocalSearchParams<{ eventId?: string; eventTitle?: string }>();
 
   const [selectedEvent, setSelectedEvent] = useState<{ id: number; title: string } | null>(
@@ -214,7 +216,12 @@ export default function TeamRecruitScreen() {
   };
 
   const canSubmit =
-    title.trim().length > 0 && roles.length > 0 && capacity >= 1 && !!endDate && !isSubmitting;
+    title.trim().length > 0 &&
+    roles.length > 0 &&
+    capacity >= 1 &&
+    !!endDate &&
+    !isSubmitting &&
+    schoolVerified;
 
   const handleSubmit = async () => {
     if (!canSubmit || !endDate) return;
@@ -239,7 +246,14 @@ export default function TeamRecruitScreen() {
       });
       Alert.alert('등록 완료', '팀 모집글 등록이 완료되었어요.', [{ text: '확인', onPress: () => router.back() }]);
     } catch (error) {
-      Alert.alert('오류', error instanceof Error ? error.message : '등록에 실패했어요. 잠시 후 다시 시도해주세요.');
+      if (error instanceof SchoolNotVerifiedError) {
+        Alert.alert('재학생 인증이 필요해요', '팀을 만들려면 먼저 재학생 인증을 완료해주세요.', [
+          { text: '취소', style: 'cancel' },
+          { text: '인증하러 가기', onPress: () => router.push('/schoolVerify') },
+        ]);
+      } else {
+        Alert.alert('오류', error instanceof Error ? error.message : '등록에 실패했어요. 잠시 후 다시 시도해주세요.');
+      }
     } finally {
       setIsSubmitting(false);
     }

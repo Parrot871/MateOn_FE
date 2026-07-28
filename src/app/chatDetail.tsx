@@ -1,13 +1,15 @@
 // src/app/chatDetail.tsx (ChatRoomScreen)
 import { Back } from '@/assets/images/tool';
+import { ChatDateSeparator } from '@/components/ui/ChatDateSeparator';
 import { ChatInput } from '@/components/ui/ChatInput';
 import { MessageBubble } from '@/components/ui/MessageBubble';
 import { useAuthStore } from '@/store/authStore';
 import { useChatRoomDetailStore } from '@/store/chatRoomDetailStore';
 import type { StompChatMessage } from '@/types/chat';
+import { formatChatDate, isSameDay } from '@/utils/formatChatDate';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -45,9 +47,33 @@ export default function ChatRoomScreen() {
     return () => leaveRoom();
   }, [roomId]);
 
-  const renderItem = ({ item }: { item: StompChatMessage }) => (
-    <MessageBubble message={item} isMine={item.senderId === myUserId} />
-  );
+  type ChatListEntry =
+    | { type: 'date'; key: string; date: string }
+    | { type: 'message'; key: string; message: StompChatMessage };
+
+  const listData = useMemo<ChatListEntry[]>(() => {
+    const entries: ChatListEntry[] = [];
+    let prevCreatedAt: string | null = null;
+    for (const message of messages) {
+      if (!isSameDay(prevCreatedAt, message.createdAt)) {
+        entries.push({
+          type: 'date',
+          key: `date-${message.createdAt}`,
+          date: formatChatDate(message.createdAt),
+        });
+      }
+      entries.push({ type: 'message', key: String(message.messageId), message });
+      prevCreatedAt = message.createdAt;
+    }
+    return entries;
+  }, [messages]);
+
+  const renderItem = ({ item }: { item: ChatListEntry }) =>
+    item.type === 'date' ? (
+      <ChatDateSeparator date={item.date} />
+    ) : (
+      <MessageBubble message={item.message} isMine={item.message.senderId === myUserId} />
+    );
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['bottom']}>
@@ -112,8 +138,8 @@ export default function ChatRoomScreen() {
         ) : (
           <FlatList
             ref={listRef}
-            data={messages}
-            keyExtractor={(item) => String(item.messageId)}
+            data={listData}
+            keyExtractor={(item) => item.key}
             renderItem={renderItem}
             contentContainerStyle={{ paddingVertical: 12 }}
             onContentSizeChange={() =>

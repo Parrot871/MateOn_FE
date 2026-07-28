@@ -59,6 +59,7 @@ export default function ChatListScreen() {
             ) : null
           }
           keyExtractor={(item) => String(item.roomId)}
+          ItemSeparatorComponent={() => <View className="h-[1px] bg-gray-100 ml-[68px]" />}
           renderItem={({ item }) => (
             <ChatListItem
               room={item}

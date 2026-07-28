@@ -126,7 +126,7 @@ export default function MypageScreen() {
   ] as const;
 
   const SETTINGS = [
-    { label: '학교 인증', onPress: () => {} },
+    { label: '학교 인증', onPress: () => router.push('/schoolVerify') },
     { label: '비밀번호 변경', onPress: () => router.push('/pwchange') },
     {
       label: '로그아웃',

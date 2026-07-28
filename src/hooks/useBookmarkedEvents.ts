@@ -1,13 +1,17 @@
-import { bookmarkEvent, fetchBookmarkedEventIds, unbookmarkEvent } from '@/api/events';
+import { fetchBookmarkedEventIds, bookmarkEvent, unbookmarkEvent } from '@/api/events';
+import { getAccessToken } from '@/api/tokenStorage';
 import { useCallback, useEffect, useState } from 'react';
 
 export function useBookmarkedEventIds() {
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
-    fetchBookmarkedEventIds()
-      .then((ids) => setBookmarkedIds(new Set(ids)))
-      .catch((error) => console.error('북마크 목록 조회 실패:', error));
+    getAccessToken().then((token) => {
+      if (!token) return;
+      fetchBookmarkedEventIds()
+        .then((ids) => setBookmarkedIds(new Set(ids)))
+        .catch((error) => console.error('북마크 목록 조회 실패:', error));
+    });
   }, []);
 
   const toggleBookmark = useCallback((eventId: number, next: boolean) => {
