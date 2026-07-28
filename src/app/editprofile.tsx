@@ -6,7 +6,16 @@ import * as DocumentPicker from 'expo-document-picker';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 const TRACKS = ['인문과학계열', '사회과학계열', '자연과학계열', '공학계열', '예체능계열', '사범·교육학계열', '의약학계열'];
 const MAX_PORTFOLIO_SIZE = 20 * 1024 * 1024;
@@ -126,7 +135,8 @@ export default function EditProfileScreen() {
         <View style={{ width: 26, height: 26 }} />
       </View>
 
-      <ScrollView className="flex-1" contentContainerClassName="px-8 pb-10">
+      <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView className="flex-1" contentContainerClassName="px-8 pb-10" keyboardShouldPersistTaps="handled">
         <Text className="text-black font-pretendard-semibold mb-2 text-lg">이름</Text>
         <TextInput
           value={name}
@@ -227,6 +237,7 @@ export default function EditProfileScreen() {
           <Text className="text-white text-lg font-pretendard-semibold">{isSubmitting ? '저장 중...' : '저장하기'}</Text>
         </TouchableOpacity>
       </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 }
