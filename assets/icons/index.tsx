@@ -1,6 +1,7 @@
 export { default as BookFill } from './book_fill.svg';
 export { default as FlagFill } from './flag_fill.svg';
 export { default as GroupFill } from './group_fill.svg';
+export { default as HappyLine } from './happy_line.svg';
 export { default as HomeFill } from './home_fill.svg';
 export { default as HomeLine } from './home_line.svg';
 export { default as MessageFill } from './message_fill.svg';

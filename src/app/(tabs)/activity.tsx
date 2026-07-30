@@ -7,13 +7,12 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const TOP_TABS = ['공모전', '대외활동', '교내활동'] as const;
+const TOP_TABS = ['공모전', '대외활동'] as const;
 type TopTab = (typeof TOP_TABS)[number];
 
 const TOP_TAB_CATEGORY: Record<TopTab, EventCategory> = {
   공모전: 'CONTEST',
-  대외활동: 'EXTERNAL',
-  교내활동: 'SCHOOL',
+  대외활동: 'EXTERNAL'
 };
 
 const FIELD_FILTERS: { label: string; value: EventField | null }[] = [

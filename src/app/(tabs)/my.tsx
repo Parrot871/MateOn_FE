@@ -3,6 +3,7 @@ import { fetchBookmarkedEventIds } from '@/api/events';
 import { getMyTeams, getTeamReviewTargets } from '@/api/team';
 import { clearTokens } from '@/api/tokenStorage';
 import { getMyProfile, type UserProfile } from '@/api/user';
+import { HappyLine } from '@/assets/icons';
 import { Back, Bookmark, FlagIcon, MypageMLogo, NotificationNewDot, ProfileUser, Star, UserIcon } from '@/assets/images/tool';
 import { useTeamRecStore } from '@/store/teamRecStore';
 import { getUnivByEmail } from '@/utils/univ';
@@ -11,49 +12,14 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Circle } from 'react-native-svg';
 
-function CircleProgress({
-  value,
-  max,
-  size,
-  strokeWidth,
-  color,
-  trackColor,
-  label,
-}: {
-  value: number;
-  max: number;
-  size: number;
-  strokeWidth: number;
-  color: string;
-  trackColor: string;
-  label: string;
-}) {
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const progress = Math.min(value / max, 1);
-  const strokeDashoffset = circumference * (1 - progress);
+// 당근마켓 스타일 가로 온도바
+function TemperatureBar({ value, max }: { value: number; max: number }) {
+  const progress = Math.min(value / max, 1) * 100;
 
   return (
-    <View style={{ width: size, height: size }} className="items-center justify-center">
-      <Svg width={size} height={size} style={{ transform: [{ rotate: '-90deg' }] }}>
-        <Circle cx={size / 2} cy={size / 2} r={radius} stroke={trackColor} strokeWidth={strokeWidth} fill="none" />
-        <Circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke={color}
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={strokeDashoffset}
-          fill="none"
-        />
-      </Svg>
-      <View className="absolute items-center">
-        <Text className="text-black text-2xl font-pretendard-bold">{label}</Text>
-      </View>
+    <View className="h-2 rounded-full bg-[#E4E9FB] overflow-hidden">
+      <View className="h-2 rounded-full bg-[#3E6AF4]" style={{ width: `${progress}%` }} />
     </View>
   );
 }
@@ -146,6 +112,8 @@ export default function MypageScreen() {
     },
   ];
 
+  const temperature = 36.5;
+
   return (
     <ScrollView
       className="flex-1 bg-white"
@@ -192,19 +160,13 @@ export default function MypageScreen() {
         <Text className="text-[#3E6AF4] text-lg font-pretendard-semibold">회원정보 수정</Text>
       </TouchableOpacity>
 
-      <Text className="text-black text-xl font-pretendard-bold mb-3">내 협업온도</Text>
-      <View className="flex-row justify-around items-center mb-8 py-6 rounded-2xl border border-gray-200">
-        <View className="items-center">
-          <CircleProgress
-            value={36.5}
-            max={100}
-            size={88}
-            strokeWidth={8}
-            color="#FF0000"
-            trackColor="#FDE2E2"
-            label="36.5"
-          />
+      <View className="mb-8 p-5 rounded-2xl border border-gray-200">
+        <Text className="text-black text-xl font-pretendard-bold mb-4">협업온도</Text>
+        <View className="flex-row items-center justify-between mb-4">
+          <Text className="text-[#3E6AF4] text-3xl font-pretendard-bold">{temperature}°C</Text>
+          <Image source={HappyLine} style={{ width: 26, height: 26 }} contentFit="contain" />
         </View>
+        <TemperatureBar value={temperature} max={100} />
       </View>
 
       <Text className="text-black text-xl font-pretendard-bold mb-3">내 활동</Text>

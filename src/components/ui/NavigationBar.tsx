@@ -54,7 +54,7 @@ export default function NavigationBar() {
             className="absolute self-center top-[-10] w-24 h-24 rounded-full z-10"
             style={{ backgroundColor: '#FAFAFC' }}
           />
-          <View className="absolute self-center top-[-4] w-20 h-20 rounded-full bg-[#C9C9EE] z-10" />
+          <View className="absolute self-center top-[-4] w-20 h-20 rounded-full bg-blue-50 z-10" />
           <Pressable
             onPress={() => router.push('/chatbot' as never)}
             className="absolute self-center top-0 w-16 h-16 rounded-full items-center justify-center z-10"

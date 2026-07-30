@@ -177,21 +177,16 @@ export async function createEvent(payload: EventRegisterPayload): Promise<EventI
 }
 
 export async function fetchRecommendedEvents(signal?: AbortSignal): Promise<EventItem[]> {
-  const accessToken = await getAccessToken();
+  // TODO: 백엔드 휴리스틱 추천 API 나오면 아래 임시 로직 제거 (/api/event/recommended deprecated)
+  const categories: EventCategory[] = ['CONTEST', 'EXTERNAL', 'SCHOOL', 'ETC'];
+  const results = await Promise.all(
+    categories.map((category) => fetchEvents(category, signal).catch(() => []))
+  );
+  const all = results.flat();
 
-  const response = await fetch(`${API_BASE_URL}/api/event/recommended`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-    signal,
-  });
-
-  const text = await response.text();
-  const result: ApiResponse<EventItem[]> | null = text ? JSON.parse(text) : null;
-
-  if (!response.ok || !result?.success) {
-    throw new Error(result?.message || `맞춤 활동 추천 조회 실패: ${response.status}`);
-  }
-
-  return result.data;
+  return [...all]
+    .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
+    .slice(0, 3);
 }
 
 export async function bookmarkEvent(eventId: number): Promise<void> {

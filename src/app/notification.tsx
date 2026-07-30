@@ -1,7 +1,7 @@
 // app/notification/index.tsx
 import { getMyNotifications, type NotificationResponseDTO } from '@/api/notification';
-import { UserAddFill } from '@/assets/icons';
-import { X } from '@/assets/images/tool';
+import { MessageFillBasic, UserAddFill } from '@/assets/icons';
+import { Star, X } from '@/assets/images/tool';
 import { useNotificationSSE } from '@/hooks/useNotificationSSE';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
@@ -34,7 +34,7 @@ function DeleteAction({ translation, onDelete }: { translation: SharedValue<numb
   );
 }
 
-const NOTI_TABS = ['전체', '가입신청', '가입요청', '메세지'] as const;
+const NOTI_TABS = ['전체', '가입신청', '가입요청', '메세지', '평가'] as const;
 type NotiTab = (typeof NOTI_TABS)[number];
 type NotiCategory = Exclude<NotiTab, '전체'>;
 
@@ -42,8 +42,18 @@ type NotiCategory = Exclude<NotiTab, '전체'>;
 function categorize(title: string): NotiCategory {
   if (title === '가입승인' || title === '가입거절') return '가입신청';
   if (title === '팀 제안 도착' || title === '제안 거절' || title === '제안 수락') return '가입요청';
+  if (title === '팀원 평가 요청') return '평가';
   return '메세지'; // "OOO님의 메시지" 패턴 등 나머지
 }
+
+// 카테고리별 아이콘 + 배경색 매핑
+// TODO: '가입요청' 전용 아이콘 생기면 UserAddFill → 교체
+const CATEGORY_ICON: Record<NotiCategory, { icon: any; bg: string }> = {
+  '가입신청': { icon: UserAddFill, bg: '#FCE9E9' },
+  '가입요청': { icon: UserAddFill, bg: '#E9F0FC' },
+  '메세지': { icon: MessageFillBasic, bg: '#E9FCEF' },
+  '평가': { icon: Star, bg: '#FFF6E0' },
+};
 
 function timeAgo(createdAt: string): string {
   const diffMs = Date.now() - new Date(createdAt).getTime();
@@ -133,33 +143,40 @@ export default function NotificationScreen() {
             <Text className="text-gray-400 text-base">알림이 없습니다</Text>
           </View>
         ) : (
-          filteredItems.map((item) => (
-            <Swipeable
-              key={item.id}
-              friction={2}
-              animationOptions={{ damping: 40, stiffness: 200, mass: 1 }}
-              renderRightActions={(_progress, translation) => (
-                <DeleteAction translation={translation} onDelete={() => removeNotification(item.id)} />
-              )}
-            >
-              <TouchableOpacity className="flex-row items-start px-5 py-4 border-b border-gray-50 bg-white">
-                <View className="w-10 h-10 rounded-full bg-[#FCE9E9] items-center justify-center mr-3">
-                  <Image source={UserAddFill} style={{ width: 20, height: 20 }} contentFit="contain" />
-                </View>
-                <View className="flex-1">
-                  <View className="flex-row items-center justify-between">
-                    <Text className="text-base text-black font-pretendard-bold leading-5">
-                      {item.title}
-                    </Text>
-                    <Text className="text-sm text-gray-400 ml-2">{timeAgo(item.createdAt)}</Text>
+          filteredItems.map((item) => {
+            const { icon, bg } = CATEGORY_ICON[categorize(item.title)];
+
+            return (
+              <Swipeable
+                key={item.id}
+                friction={2}
+                animationOptions={{ damping: 40, stiffness: 200, mass: 1 }}
+                renderRightActions={(_progress, translation) => (
+                  <DeleteAction translation={translation} onDelete={() => removeNotification(item.id)} />
+                )}
+              >
+                <TouchableOpacity className="flex-row items-start px-5 py-4 border-b border-gray-50 bg-white">
+                  <View
+                    className="w-10 h-10 rounded-full items-center justify-center mr-3"
+                    style={{ backgroundColor: bg }}
+                  >
+                    <Image source={icon} style={{ width: 20, height: 20 }} contentFit="contain" />
                   </View>
-                  <Text className="text-sm text-gray-500 font-pretendard-medium leading-5 mt-1">
-                    {item.content}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </Swipeable>
-          ))
+                  <View className="flex-1">
+                    <View className="flex-row items-center justify-between">
+                      <Text className="text-base text-black font-pretendard-bold leading-5">
+                        {item.title}
+                      </Text>
+                      <Text className="text-sm text-gray-400 ml-2">{timeAgo(item.createdAt)}</Text>
+                    </View>
+                    <Text className="text-sm text-gray-500 font-pretendard-medium leading-5 mt-1">
+                      {item.content}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </Swipeable>
+            );
+          })
         )}
       </ScrollView>
     </View>

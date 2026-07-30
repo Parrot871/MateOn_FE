@@ -36,6 +36,12 @@ import { Back } from '@/assets/images/tool';
 import { useSchoolVerified } from '@/hooks/useSchoolVerified';
 import { getUnivByEmail } from '@/utils/univ';
 
+// 모집 마감일이 지났는지 여부. data.recruiting 플래그는 날짜와 무관하게 내려오므로 별도로 체크해야 함.
+// TODO: 다른 화면에서도 필요해지면 utils로 이동
+function isRecruitmentPeriodOver(recruitmentEndDate: string): boolean {
+  return new Date() > new Date(`${recruitmentEndDate}T23:59:59`);
+}
+
 type State =
   | { status: 'loading' }
   | { status: 'error'; message: string }
@@ -250,7 +256,11 @@ function TeamDetailContent({
   router: ReturnType<typeof useRouter>;
 }) {
   const additionalMembers = data.currentMemberCount - 1;
-  const isRecruitingOpen = data.recruiting && data.currentMemberCount < data.capacity;
+  // 모집중 플래그 + 인원 미달 + 마감일 안 지남을 모두 만족해야 실제로 모집 중인 상태
+  const isRecruitingOpen =
+    data.recruiting &&
+    data.currentMemberCount < data.capacity &&
+    !isRecruitmentPeriodOver(data.recruitmentEndDate);
   const leaderMetaLine = [getUnivByEmail(data.leaderEmail), data.leaderCollege, data.leaderMajor]
     .filter(Boolean)
     .join(' · ');
@@ -588,7 +598,7 @@ function TeamDetailContent({
       {/* 하단 고정 버튼 */}
       <View className="px-5 pt-3 pb-6 border-t border-gray-100 bg-white">
         {data.leader ? (
-          data.recruiting ? (
+          isRecruitingOpen ? (
             <TouchableOpacity
               activeOpacity={0.8}
               className="bg-indigo-600 rounded-xl py-4 items-center"
@@ -621,7 +631,7 @@ function TeamDetailContent({
           </TouchableOpacity>
         ) : (
           <>
-            {data.recruiting && (
+            {isRecruitingOpen && (
               <TouchableOpacity
                 activeOpacity={0.8}
                 className="bg-indigo-50 border border-indigo-600 rounded-xl py-4 items-center mb-2.5"
@@ -640,12 +650,12 @@ function TeamDetailContent({
             <TouchableOpacity
               activeOpacity={0.8}
               className="bg-indigo-600 rounded-xl py-4 items-center"
-              disabled={!data.recruiting}
-              style={{ opacity: data.recruiting ? 1 : 0.4 }}
+              disabled={!isRecruitingOpen}
+              style={{ opacity: isRecruitingOpen ? 1 : 0.4 }}
               onPress={() => router.push(`/teamApply?teamId=${teamId}`)}
             >
               <Text className="text-white font-pretendard-bold text-base">
-                {data.recruiting ? '지원하기' : '모집이 마감됐어요'}
+                {isRecruitingOpen ? '지원하기' : '모집이 마감됐어요'}
               </Text>
             </TouchableOpacity>
           </>

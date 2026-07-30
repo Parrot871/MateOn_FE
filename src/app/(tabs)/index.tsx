@@ -194,7 +194,7 @@ export default function HomeScreen() {
         ) : null}
 
         <View className="mb-8">
-          <Text className="text-black text-xl font-pretendard-bold mb-3">맞춤 활동 추천</Text>
+          <Text className="text-black text-xl font-pretendard-bold mb-3">최근 등록된 활동</Text>
 
           {recommendedEvents.status === 'loading' && (
             <View className="items-center justify-center py-10">
@@ -215,16 +215,25 @@ export default function HomeScreen() {
           )}
 
           {recommendedEvents.status === 'ready' && (
-            <View className="gap-3">
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              decelerationRate="fast"
+              snapToInterval={CARD_WIDTH + CARD_GAP}
+              snapToAlignment="start"
+              contentContainerStyle={{ paddingRight: 20, gap: CARD_GAP }}
+              style={{ marginHorizontal: -20, paddingLeft: 20 }}
+            >
               {recommendedEvents.events.map((event) => (
-                <EventCard
-                  key={event.id}
-                  item={event}
-                  isBookmarked={bookmarkedIds.has(event.id)}
-                  onToggleBookmark={toggleBookmark}
-                />
+                <View key={event.id} style={{ width: CARD_WIDTH }}>
+                  <EventCard
+                    item={event}
+                    isBookmarked={bookmarkedIds.has(event.id)}
+                    onToggleBookmark={toggleBookmark}
+                  />
+                </View>
               ))}
-            </View>
+            </ScrollView>
           )}
         </View>
 

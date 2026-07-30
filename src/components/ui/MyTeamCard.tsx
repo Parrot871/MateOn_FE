@@ -7,6 +7,12 @@ interface MyTeamCardProps {
   onPress: () => void;
 }
 
+// 모집 마감일이 지났는지 여부. team.recruiting 플래그는 날짜와 무관하게 내려오므로 별도로 체크해야 함.
+// TODO: teamDetail.tsx에도 동일 로직 있음 — utils로 공통화 필요
+function isRecruitmentPeriodOver(recruitmentEndDate: string): boolean {
+  return new Date() > new Date(`${recruitmentEndDate}T23:59:59`);
+}
+
 export function MyTeamCard({ team, onPress }: MyTeamCardProps) {
   // 모집률 계산 (0~100%)
   const fillPercentage = Math.min(
@@ -15,6 +21,8 @@ export function MyTeamCard({ team, onPress }: MyTeamCardProps) {
   );
 
   const isFull = team.currentMemberCount >= team.capacity;
+  const isRecruitingOpen =
+    team.recruiting && !isFull && !isRecruitmentPeriodOver(team.recruitmentEndDate);
 
   return (
     <TouchableOpacity
@@ -33,18 +41,18 @@ export function MyTeamCard({ team, onPress }: MyTeamCardProps) {
       <View className="flex-row justify-between items-center mb-2.5">
         <View
           className={`flex-row items-center px-2.5 py-1 rounded-full ${
-            team.recruiting ? 'bg-blue-50' : 'bg-gray-100'
+            isRecruitingOpen ? 'bg-blue-50' : 'bg-gray-100'
           }`}
         >
-          {team.recruiting && (
+          {isRecruitingOpen && (
             <View className="w-1.5 h-1.5 rounded-full bg-blue-600 mr-1.5" />
           )}
           <Text
             className={`text-xs font-pretendard-semibold ${
-              team.recruiting ? 'text-blue-600' : 'text-gray-500'
+              isRecruitingOpen ? 'text-blue-600' : 'text-gray-500'
             }`}
           >
-            {team.recruiting ? '모집 중' : '모집 완료'}
+            {isRecruitingOpen ? '모집 중' : '모집 완료'}
           </Text>
         </View>
 
