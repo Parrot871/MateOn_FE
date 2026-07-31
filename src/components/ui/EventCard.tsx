@@ -68,9 +68,11 @@ export function EventCard({ item, isBookmarked = false, onToggleBookmark }: Even
           )}
         </View>
         <Text className="text-gray-500 text-xs font-pretendard" numberOfLines={1}>
-          주최: {item.organizer}
+          주최: {item.organizer || '미정'}
         </Text>
-        <Text className="text-gray-500 text-xs font-pretendard">마감: {item.endDate.replaceAll('-', '.')}</Text>
+        <Text className="text-gray-500 text-xs font-pretendard">
+          마감: {item.endDate ? item.endDate.replaceAll('-', '.') : '미정'}
+        </Text>
       </View>
     </TouchableOpacity>
   );

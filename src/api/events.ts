@@ -1,3 +1,4 @@
+import { File } from 'expo-file-system';
 import type { ApiResponse } from './auth';
 import { getAccessToken } from './tokenStorage';
 
@@ -85,6 +86,21 @@ export type EventRegisterPayload = {
   summarizedDescription?: string;
   recommendedTargets?: string;
   externalId?: string;
+};
+
+export type EventExtractionDraft = {
+  category: EventCategory;
+  field: EventField;
+  title: string;
+  description: string | null;
+  imageUrl: string | null;
+  detailUrl: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  organizer: string | null;
+  targetSchool: string | null;
+  summarizedDescription: string | null;
+  recommendedTargets: string | null;
 };
 
 export function computeDDay(endDate: string): string {
@@ -285,6 +301,36 @@ export async function fetchEventDetail(id: number, signal?: AbortSignal): Promis
   }
 
   console.log('[fetchEventDetail]', id, text);
+
+  return result.data;
+}
+
+export async function extractEventImage(
+  image: { uri: string; name: string; type: string },
+  signal?: AbortSignal
+): Promise<EventExtractionDraft> {
+  const accessToken = await getAccessToken();
+  const file = new File(image.uri);
+  const formData = new FormData();
+  formData.append('image', file, image.name);
+
+  const response = await fetch(`${API_BASE_URL}/api/events/extract-image`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: formData,
+    signal,
+  });
+
+  const text = await response.text();
+  console.log('[extractEventImage] status:', response.status, 'body:', text.slice(0, 300));
+
+  const result: ApiResponse<EventExtractionDraft> | null = text ? JSON.parse(text) : null;
+
+  if (!response.ok || !result?.success) {
+    throw new Error(result?.message || `이미지 추출 실패: ${response.status}`);
+  }
 
   return result.data;
 }

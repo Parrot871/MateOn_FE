@@ -3,6 +3,8 @@ import { SearchLineBasic } from '@/assets/icons';
 import { EventCard } from '@/components/ui/EventCard';
 import { useBookmarkedEventIds } from '@/hooks/useBookmarkedEvents';
 import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
+import { useBottomTabBarHeight } from 'expo-router/js-tabs';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,6 +23,8 @@ const FIELD_FILTERS: { label: string; value: EventField | null }[] = [
 ];
 
 export default function ActivityScreen() {
+  const router = useRouter();
+  const tabBarHeight = useBottomTabBarHeight();
   const insets = useSafeAreaInsets();
   const [topTab, setTopTab] = useState<TopTab>('공모전');
   const [filter, setFilter] = useState<EventField | null>(null);
@@ -163,6 +167,18 @@ export default function ActivityScreen() {
           )}
         </ScrollView>
       )}
+      <TouchableOpacity
+        onPress={() =>
+          router.push({
+            pathname: '/eventRegister',
+            params: { category: TOP_TAB_CATEGORY[topTab]}
+          })
+        }
+        style={{ bottom: 24 + tabBarHeight }}
+        className="absolute right-5 h-14 w-14 rounded-full bg-[#3E6AF4] items-center justify-center shadow-lg"
+        >
+          <Text className="text-white text-3xl font-pretendard-bold">+</Text>
+        </TouchableOpacity>
     </View>
   );
 }
