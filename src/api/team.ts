@@ -38,7 +38,7 @@ export type TeamDetail = {
   leaderCollege: string;
   leaderGrade: string;
   leaderMajor: string;
-  leaderCollaborationTemperature: number;
+  leaderCollaborationTemperature: number | null;
   recruiting: boolean;
   recruitmentStartDate: string;
   recruitmentEndDate: string;

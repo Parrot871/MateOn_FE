@@ -33,6 +33,12 @@ module.exports = {
       ],
       "expo-secure-store",
       "@react-native-community/datetimepicker",
+      [
+        "expo-image-picker",
+        {
+          photosPermission: "프로필 사진을 선택하기 위해 사진 보관함 접근 권한이 필요해요.",
+        },
+      ],
     ],
     experiments: {
       typedRoutes: true,

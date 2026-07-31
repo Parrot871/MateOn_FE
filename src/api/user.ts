@@ -17,6 +17,10 @@ export type UserProfile = {
   interestJobSecondary: string | null;
   interestJobTertiary: string | null;
   tagline: string | null;
+  profileImageUrl: string | null;
+  collaborationTemperature: number | null;
+  collaborationReviewCount: number;
+  participatedActivities: ParticipatedActivity[];
 };
 
 export async function getMyProfile() {
@@ -47,6 +51,8 @@ export type UpdateProfilePayload = {
   interestJobPrimary: string;
   interestJobSecondary: string;
   interestJobTertiary: string;
+  schoolEmail?: string;
+  tagline?: string | null;
 };
 
 export async function updateProfile(payload: UpdateProfilePayload) {
@@ -75,6 +81,67 @@ export async function updateProfile(payload: UpdateProfilePayload) {
   return result.data;
 }
 
+// Expo의 fetch 폴리필은 RN 특유의 { uri, name, type } FormData 파트를 지원하지 않아
+// ("Unsupported FormDataPart implementation") XMLHttpRequest(RN 네이티브 네트워킹 브리지)로 직접 전송한다.
+export function uploadProfileImage(file: { uri: string; name: string; type: string }): Promise<void> {
+  return new Promise((resolve, reject) => {
+    getAccessToken().then((accessToken) => {
+      if (!accessToken) {
+        reject(new Error('로그인이 필요합니다.'));
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('image', {
+        uri: file.uri,
+        name: file.name,
+        type: file.type,
+      } as unknown as Blob);
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${API_BASE_URL}/api/users/me/profile-image`);
+      xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`);
+
+      xhr.onload = () => {
+        let result: ApiResponse<null> | null = null;
+        try {
+          result = xhr.responseText ? JSON.parse(xhr.responseText) : null;
+        } catch {
+          // JSON 파싱 실패 시 아래 status 체크로 넘어감
+        }
+
+        if (xhr.status >= 200 && xhr.status < 300 && result?.success) {
+          resolve();
+        } else {
+          reject(new Error(result?.message || `프로필 사진 업로드 실패: ${xhr.status}`));
+        }
+      };
+      xhr.onerror = () => reject(new Error('네트워크 오류가 발생했습니다.'));
+      xhr.send(formData);
+    });
+  });
+}
+
+export async function deleteProfileImage() {
+  const accessToken = await getAccessToken();
+
+  if (!accessToken) {
+    throw new Error('로그인이 필요합니다.');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/users/me/profile-image`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  const text = await response.text();
+  const result: ApiResponse<null> | null = text ? JSON.parse(text) : null;
+
+  if (!response.ok || !result?.success) {
+    throw new Error(result?.message || `프로필 사진 삭제 실패: ${response.status}`);
+  }
+}
+
 export class UserNotFoundError extends Error {
   constructor(message: string) {
     super(message);
@@ -101,8 +168,10 @@ export type PublicUserProfile = {
   experienceLevel: string | null;
   activityStyle: string | null;
   collaborationTemperature: number | null;
+  collaborationReviewCount: number;
   participatedActivities: ParticipatedActivity[];
   isMe: boolean;
+  profileImageUrl: string | null;
 };
 
 // 타인의 공개 프로필 조회 (추천 목록/지원자/역제안/DM 등에서 사용). email/schoolEmail/providerId는 내려오지 않음

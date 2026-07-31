@@ -2,15 +2,16 @@ import { getMyApplications } from '@/api/apply';
 import { fetchBookmarkedEventIds } from '@/api/events';
 import { getMyTeams, getTeamReviewTargets } from '@/api/team';
 import { clearTokens } from '@/api/tokenStorage';
-import { getMyProfile, type UserProfile } from '@/api/user';
+import { deleteProfileImage, getMyProfile, uploadProfileImage, type UserProfile } from '@/api/user';
 import { HappyLine } from '@/assets/icons';
 import { Back, Bookmark, FlagIcon, MypageMLogo, NotificationNewDot, ProfileUser, Star, UserIcon } from '@/assets/images/tool';
 import { useTeamRecStore } from '@/store/teamRecStore';
 import { getUnivByEmail } from '@/utils/univ';
+import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // 당근마켓 스타일 가로 온도바
@@ -18,8 +19,8 @@ function TemperatureBar({ value, max }: { value: number; max: number }) {
   const progress = Math.min(value / max, 1) * 100;
 
   return (
-    <View className="h-2 rounded-full bg-[#E4E9FB] overflow-hidden">
-      <View className="h-2 rounded-full bg-[#3E6AF4]" style={{ width: `${progress}%` }} />
+    <View className="h-2 rounded-full bg-[#FDE2E2] overflow-hidden">
+      <View className="h-2 rounded-full bg-[#FF0000]" style={{ width: `${progress}%` }} />
     </View>
   );
 }
@@ -58,7 +59,9 @@ export default function MypageScreen() {
   const [myTeamCount, setMyTeamCount] = useState(0);
   const [reviewableTeamCount, setReviewableTeamCount] = useState(0);
   const [bookmarkCount, setBookmarkCount] = useState(0);
-  const univ = getUnivByEmail(profile?.email);
+  const [localImageUri, setLocalImageUri] = useState<string | null>(null);
+  const [photoSheetVisible, setPhotoSheetVisible] = useState(false);
+  const univ = getUnivByEmail(profile?.schoolEmail ?? profile?.email);
 
   useFocusEffect(
     useCallback(() => {
@@ -83,6 +86,54 @@ export default function MypageScreen() {
         .catch((error) => console.error('북마크 개수 조회 실패:', error));
     }, [])
   );
+
+  const handleChangePhoto = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('사진 접근 권한 필요', '설정에서 사진 보관함 접근 권한을 허용해주세요.', [
+        { text: '확인' },
+      ]);
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.8,
+      allowsEditing: true,
+      aspect: [1, 1],
+    });
+    if (result.canceled) return;
+
+    const asset = result.assets[0];
+    setLocalImageUri(asset.uri);
+
+    try {
+      await uploadProfileImage({
+        uri: asset.uri,
+        name: asset.fileName ?? 'profile.jpg',
+        type: asset.mimeType ?? 'image/jpeg',
+      });
+      getMyProfile().then(setProfile).catch(() => {});
+    } catch (error) {
+      setLocalImageUri(null);
+      Alert.alert('업로드 실패', error instanceof Error ? error.message : '잠시 후 다시 시도해주세요.');
+    }
+  };
+
+  const handleDeletePhoto = async () => {
+    const previousLocalImageUri = localImageUri;
+    setLocalImageUri(null);
+
+    try {
+      await deleteProfileImage();
+      setProfile((prev) => (prev ? { ...prev, profileImageUrl: null } : prev));
+    } catch (error) {
+      setLocalImageUri(previousLocalImageUri);
+      Alert.alert('삭제 실패', error instanceof Error ? error.message : '잠시 후 다시 시도해주세요.');
+    }
+  };
+
+  const handlePressCamera = () => setPhotoSheetVisible(true);
 
   const ACTIVITIES = [
     { label: '지원 및 제안', count: applicationCount, icon: UserIcon, path: '/myApplications' },
@@ -115,6 +166,7 @@ export default function MypageScreen() {
   const temperature = 36.5;
 
   return (
+    <>
     <ScrollView
       className="flex-1 bg-white"
       contentContainerClassName="px-5"
@@ -131,18 +183,31 @@ export default function MypageScreen() {
       </View>
 
       <View className="flex-row items-center mb-6">
-        <View className="w-20 h-20 rounded-full bg-gray-100 items-center justify-center">
-          <Image source={ProfileUser} style={{ width: 40, height: 40 }} contentFit="contain" />
-          <View className="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full bg-white border border-gray-300 items-center justify-center">
+        <View className="w-20 h-20">
+          <View className="w-20 h-20 rounded-full bg-gray-100 items-center justify-center overflow-hidden">
+            {localImageUri || profile?.profileImageUrl ? (
+              <Image
+                source={{ uri: localImageUri ?? profile?.profileImageUrl ?? undefined }}
+                style={{ width: 80, height: 80 }}
+                contentFit="cover"
+              />
+            ) : (
+              <Image source={ProfileUser} style={{ width: 40, height: 40 }} contentFit="contain" />
+            )}
+          </View>
+          <TouchableOpacity
+            onPress={handlePressCamera}
+            className="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full bg-white border border-gray-300 items-center justify-center"
+          >
             <Image
               source={require('@/assets/images/tool/cmr.png')}
               style={{ width: 10, height: 10 }}
               contentFit="contain"
             />
-          </View>
+          </TouchableOpacity>
         </View>
 
-        <View className="ml-8">
+        <View className="ml-6">
           <Text className="text-black text-3xl font-pretendard-semibold">{profile?.name ?? ''}</Text>
           <Text className="text-gray-700 font-pretendard text-lg">
             {profile?.schoolVerified ? `${univ ?? ''} ${profile?.major ?? ''} 재학생` : '재학생 인증 필요'}
@@ -163,7 +228,7 @@ export default function MypageScreen() {
       <View className="mb-8 p-5 rounded-2xl border border-gray-200">
         <Text className="text-black text-xl font-pretendard-bold mb-4">협업온도</Text>
         <View className="flex-row items-center justify-between mb-4">
-          <Text className="text-[#3E6AF4] text-3xl font-pretendard-bold">{temperature}°C</Text>
+          <Text className="text-[#FF0000] text-3xl font-pretendard-bold">{temperature}°C</Text>
           <Image source={HappyLine} style={{ width: 26, height: 26 }} contentFit="contain" />
         </View>
         <TemperatureBar value={temperature} max={100} />
@@ -214,5 +279,53 @@ export default function MypageScreen() {
         ))}
       </View>
     </ScrollView>
+
+    <Modal
+      visible={photoSheetVisible}
+      transparent
+      animationType="fade"
+      onRequestClose={() => setPhotoSheetVisible(false)}
+    >
+      <TouchableOpacity
+        activeOpacity={1}
+        onPress={() => setPhotoSheetVisible(false)}
+        className="flex-1 bg-black/40 justify-end px-2"
+        style={{ paddingBottom: 8 + insets.bottom }}
+      >
+        <View onStartShouldSetResponder={() => true}>
+          <View className="bg-[#F2F2F2] rounded-2xl overflow-hidden mb-2">
+            <TouchableOpacity
+              onPress={() => {
+                setPhotoSheetVisible(false);
+                handleChangePhoto();
+              }}
+              className="h-16 items-center justify-center"
+            >
+              <Text className="text-black text-lg font-pretendard">프로필 사진 변경</Text>
+            </TouchableOpacity>
+
+            <View className="h-[0.5px] bg-gray-300" />
+
+            <TouchableOpacity
+              onPress={() => {
+                setPhotoSheetVisible(false);
+                handleDeletePhoto();
+              }}
+              className="h-16 items-center justify-center"
+            >
+              <Text className="text-black text-lg font-pretendard">기본 이미지로 설정</Text>
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity
+            onPress={() => setPhotoSheetVisible(false)}
+            className="h-16 items-center justify-center bg-[#F2F2F2] rounded-2xl"
+          >
+            <Text className="text-red-500 text-xl font-pretendard-semibold">취소</Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    </Modal>
+    </>
   );
 }

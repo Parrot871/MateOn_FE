@@ -1,6 +1,6 @@
 // app/userProfile.tsx
 import { getPublicUserProfile, UserNotFoundError, type PublicUserProfile } from '@/api/user';
-import { Back } from '@/assets/images/tool';
+import { Back, ProfileUser } from '@/assets/images/tool';
 import { Image } from 'expo-image';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -118,14 +118,27 @@ export default function UserProfileScreen() {
               style={{ elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8 }}
             >
               <View className="flex-row items-start justify-between">
-                <View className="flex-1 pr-3">
-                  <Text className="text-black text-xl font-pretendard-bold">{profile.name}</Text>
-                  {!!profile.tagline && (
-                    <Text className="text-gray-500 text-base font-pretendard-medium mt-1">{profile.tagline}</Text>
-                  )}
-                  {metaLine.length > 0 && (
-                    <Text className="text-gray-400 text-sm font-pretendard-medium mt-1">{metaLine}</Text>
-                  )}
+                <View className="flex-row flex-1 pr-3">
+                  <View className="w-14 h-14 rounded-full bg-gray-100 items-center justify-center overflow-hidden mr-3">
+                    {profile.profileImageUrl ? (
+                      <Image
+                        source={{ uri: profile.profileImageUrl }}
+                        style={{ width: 56, height: 56 }}
+                        contentFit="cover"
+                      />
+                    ) : (
+                      <Image source={ProfileUser} style={{ width: 32, height: 32 }} contentFit="contain" />
+                    )}
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-black text-xl font-pretendard-bold">{profile.name}</Text>
+                    {!!profile.tagline && (
+                      <Text className="text-gray-500 text-lg font-pretendard-medium mt-1">{profile.tagline}</Text>
+                    )}
+                    {metaLine.length > 0 && (
+                      <Text className="text-gray-400 text-base font-pretendard-medium mt-1">{metaLine}</Text>
+                    )}
+                  </View>
                 </View>
 
                 <View className="items-end">

@@ -1,5 +1,6 @@
 // src/app/schoolVerify.tsx
 import { requestEmailCode, verifyEmailCode } from '@/api/auth';
+import { getMyProfile, updateProfile } from '@/api/user';
 import { Back } from '@/assets/images/tool';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
@@ -18,6 +19,7 @@ export default function SchoolVerifyScreen() {
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
   const [isCodeVerified, setIsCodeVerified] = useState(false);
   const [codeError, setCodeError] = useState<string | null>(null);
+  const [isCompleting, setIsCompleting] = useState(false);
 
   useEffect(() => {
     if (cooldown === 0) return;
@@ -64,10 +66,31 @@ export default function SchoolVerifyScreen() {
     }
   };
 
-  const handleComplete = () => {
-    Alert.alert('학교 인증 완료', '학교 인증이 완료되었습니다.', [
-      { text: '확인', onPress: () => router.back() },
-    ]);
+  const handleComplete = async () => {
+    if (!isCodeVerified || isCompleting) return;
+
+    setIsCompleting(true);
+    try {
+      const profile = await getMyProfile();
+      console.log('[schoolVerify] before update:', JSON.stringify(profile));
+      const updated = await updateProfile({
+        name: profile.name,
+        college: profile.college ?? '',
+        major: profile.major ?? '',
+        interestJobPrimary: profile.interestJobPrimary ?? '',
+        interestJobSecondary: profile.interestJobSecondary ?? '',
+        interestJobTertiary: profile.interestJobTertiary ?? '',
+        schoolEmail: email,
+      });
+      console.log('[schoolVerify] after update:', JSON.stringify(updated));
+      Alert.alert('학교 인증 완료', '학교 인증이 완료되었습니다.', [
+        { text: '확인', onPress: () => router.back() },
+      ]);
+    } catch (error) {
+      Alert.alert('학교 인증 실패', error instanceof Error ? error.message : '잠시 후 다시 시도해주세요.');
+    } finally {
+      setIsCompleting(false);
+    }
   };
 
   return (
@@ -129,12 +152,14 @@ export default function SchoolVerifyScreen() {
 
         <TouchableOpacity
           onPress={handleComplete}
-          disabled={!isCodeVerified}
+          disabled={!isCodeVerified || isCompleting}
           className={`h-14 mt-4 rounded-xl border border-[#3E6AF4] bg-white justify-center items-center ${
             isCodeVerified ? '' : 'opacity-40'
           }`}
         >
-          <Text className="text-[#3E6AF4] text-lg font-pretendard-semibold">완료</Text>
+          <Text className="text-[#3E6AF4] text-lg font-pretendard-semibold">
+            {isCompleting ? '처리 중...' : '완료'}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>

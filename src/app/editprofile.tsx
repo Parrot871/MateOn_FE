@@ -1,3 +1,4 @@
+import { summarizePortfolio } from '@/api/portfolio';
 import { getMyProfile, updateProfile } from '@/api/user';
 import { PdfImg } from '@/assets/images/login';
 import { Back } from '@/assets/images/tool';
@@ -63,6 +64,8 @@ export default function EditProfileScreen() {
   const [job2, setJob2] = useState('');
   const [job3, setJob3] = useState('');
   const [portfolio, setPortfolio] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
+  const [tagline, setTagline] = useState<string | null>(null);
+  const [isSummarizing, setIsSummarizing] = useState(false);
 
   const handlePickPortfolio = async () => {
     const result = await DocumentPicker.getDocumentAsync({ type: 'application/pdf' });
@@ -75,18 +78,30 @@ export default function EditProfileScreen() {
     }
 
     setPortfolio(file);
+    setIsSummarizing(true);
+    try {
+      const result = await summarizePortfolio({ uri: file.uri, name: file.name });
+      setTagline(result.summary);
+    } catch (error) {
+      Alert.alert('요약 실패', error instanceof Error ? error.message : '잠시 후 다시 시도해주세요.', [
+        { text: '확인' },
+      ]);
+    } finally {
+      setIsSummarizing(false);
+    }
   };
 
   useEffect(() => {
     getMyProfile()
       .then((profile) => {
         setName(profile.name ?? '');
-        setUniv(profile.schoolVerified ? getUnivByEmail(profile.email) ?? '' : '');
+        setUniv(profile.schoolVerified ? getUnivByEmail(profile.schoolEmail ?? profile.email) ?? '' : '');
         setTrack(profile.college ?? null);
         setMajor(profile.major ?? '');
         setJob1(profile.interestJobPrimary ?? '');
         setJob2(profile.interestJobSecondary ?? '');
         setJob3(profile.interestJobTertiary ?? '');
+        setTagline(profile.tagline ?? null);
       })
       .catch((error) => {
         Alert.alert('알림', error instanceof Error ? error.message : '내 정보를 불러오지 못했습니다.', [
@@ -110,6 +125,7 @@ export default function EditProfileScreen() {
         interestJobPrimary: job1,
         interestJobSecondary: job2,
         interestJobTertiary: job3,
+        tagline,
       });
       Alert.alert('회원정보 수정 완료', '회원정보가 수정되었습니다.', [{ text: '확인', onPress: () => router.back() }]);
     } catch (error) {
@@ -228,6 +244,27 @@ export default function EditProfileScreen() {
           style={{ verticalAlign: 'middle' }}
           className="h-12 px-1 mb-8 bg-white text-black border-b border-black font-pretendard text-lg"
         />
+
+        <Text className="text-black font-pretendard-semibold mb-2">포트폴리오</Text>
+        <TouchableOpacity
+          onPress={handlePickPortfolio}
+          disabled={isSummarizing}
+          className="h-40 mb-8 px-4 bg-gray-100 rounded-xl border border-gray-300 justify-center items-center gap-1"
+        >
+          <Image source={PdfImg} style={{ width: 28, height: 28 }} />
+          {isSummarizing ? (
+            <Text className="text-gray-500 font-pretendard text-base text-center">AI가 포트폴리오를 분석하는 중...</Text>
+          ) : portfolio ? (
+            <Text className="text-gray-500 font-pretendard text-base text-center">{portfolio.name}</Text>
+          ) : (
+            <>
+              <Text className="text-gray-500 font-pretendard-semibold text-xl text-center">
+                PDF 파일을 선택해주세요
+              </Text>
+              <Text className="text-gray-400 font-pretendard text-s text-center">최대 20MB</Text>
+            </>
+          )}
+        </TouchableOpacity>
 
         <TouchableOpacity
           onPress={handleSubmit}

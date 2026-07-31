@@ -34,6 +34,7 @@ import {
 } from '@/api/team';
 import { Back } from '@/assets/images/tool';
 import { useSchoolVerified } from '@/hooks/useSchoolVerified';
+import { getPublicUserProfile, type PublicUserProfile } from '@/api/user';
 import { getUnivByEmail } from '@/utils/univ';
 
 // 모집 마감일이 지났는지 여부. data.recruiting 플래그는 날짜와 무관하게 내려오므로 별도로 체크해야 함.
@@ -228,8 +229,16 @@ export default function TeamDetailScreen() {
   );
 }
 
-function Avatar() {
-  return <View className="w-12 h-12 rounded-full bg-gray-200" />;
+function Avatar({ uri }: { uri?: string | null }) {
+  if (!uri) {
+    return <View className="w-12 h-12 rounded-full bg-gray-200" />;
+  }
+
+  return (
+    <View className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden">
+      <Image source={{ uri }} style={{ width: 48, height: 48 }} contentFit="cover" />
+    </View>
+  );
 }
 
 const OFFER_STATUS_LABEL: Record<OfferStatus, string> = {
@@ -265,7 +274,19 @@ function TeamDetailContent({
     .filter(Boolean)
     .join(' · ');
   const [aiLoading, setAiLoading] = useState(false);
+  const [leaderProfile, setLeaderProfile] = useState<PublicUserProfile | null>(null);
   const schoolVerified = useSchoolVerified();
+
+  useEffect(() => {
+    getPublicUserProfile(data.leaderId)
+      .then(setLeaderProfile)
+      .catch(() => {});
+  }, [data.leaderId]);
+
+  const leaderTemperatureLabel =
+    leaderProfile && leaderProfile.collaborationTemperature !== null
+      ? `${leaderProfile.collaborationTemperature}°C`
+      : '평가 부족';
 
   // 보낸 제안 목록 (팀장만)
   const [offers, setOffers] = useState<TeamOfferResponseDTO[] | null>(null);
@@ -387,8 +408,12 @@ function TeamDetailContent({
           {data.title}
         </Text>
 
-        <View className="flex-row items-center mb-6 bg-gray-50 p-3.5 rounded-2xl">
-          <Avatar />
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => router.push({ pathname: '/userProfile', params: { userId: data.leaderId } })}
+          className="flex-row items-center mb-6 bg-gray-50 p-3.5 rounded-2xl"
+        >
+          <Avatar uri={leaderProfile?.profileImageUrl} />
           <View className="ml-3.5 flex-1">
             <View className="flex-row items-center gap-1.5 ml-1">
               <Text className="text-gray-900 text-lg font-pretendard-bold">
@@ -409,10 +434,10 @@ function TeamDetailContent({
               협업 온도
             </Text>
             <Text className="text-indigo-600 text-base font-pretendard-bold">
-              {data.leaderCollaborationTemperature}°C
+              {leaderTemperatureLabel}
             </Text>
           </View>
-        </View>
+        </TouchableOpacity>
 
         <View className="flex-row bg-slate-50 rounded-2xl p-4 mb-7 justify-between items-center">
           <View className="flex-1 items-center">
@@ -503,8 +528,12 @@ function TeamDetailContent({
             </View>
           </View>
 
-          <View className="flex-row items-center py-2">
-            <Avatar />
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => router.push({ pathname: '/userProfile', params: { userId: data.leaderId } })}
+            className="flex-row items-center py-2"
+          >
+            <Avatar uri={leaderProfile?.profileImageUrl} />
             <View className="ml-3 flex-1">
               <Text className="text-gray-900 text-lg font-pretendard-bold">
                 {data.leaderName}
@@ -518,7 +547,7 @@ function TeamDetailContent({
                 팀장
               </Text>
             </View>
-          </View>
+          </TouchableOpacity>
 
           {additionalMembers > 0 && (
             <View className="mt-2 bg-gray-50 rounded-xl p-3 items-center">

@@ -1,5 +1,6 @@
 // src/app/(auth)/myInfo.tsx
 import { signUp } from '@/api/auth';
+import { summarizePortfolio } from '@/api/portfolio';
 import { PdfImg } from '@/assets/images/login';
 import { Back } from '@/assets/images/tool';
 import { getUnivByEmail } from '@/utils/univ';
@@ -60,6 +61,8 @@ export default function MyInfoScreen() {
   const [job2, setJob2] = useState('');
   const [job3, setJob3] = useState('');
   const [portfolio, setPortfolio] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
+  const [tagline, setTagline] = useState<string | null>(null);
+  const [isSummarizing, setIsSummarizing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isComplete = !!(name && track && major && job1 && job2 && job3);
@@ -88,7 +91,7 @@ export default function MyInfoScreen() {
                 interestJobPrimary: job1,
                 interestJobSecondary: job2,
                 interestJobTertiary: job3,
-                tagline: null,
+                tagline,
               }
             : {
                 email: email!,
@@ -105,7 +108,7 @@ export default function MyInfoScreen() {
                 interestJobPrimary: job1,
                 interestJobSecondary: job2,
                 interestJobTertiary: job3,
-                tagline: null,
+                tagline,
               }
         );
       } catch (error) {
@@ -132,6 +135,16 @@ export default function MyInfoScreen() {
     }
 
     setPortfolio(file);
+    setIsSummarizing(true);
+    try {
+      const result = await summarizePortfolio({ uri: file.uri, name: file.name });
+      setTagline(result.summary);
+    } catch (error) {
+      // 카카오 플로우가 아니면 아직 로그인 전이라 요약 호출이 실패할 수 있음 — 파일 선택 자체는 유지
+      console.warn('[handlePickPortfolio] 요약 실패', error);
+    } finally {
+      setIsSummarizing(false);
+    }
   };
 
   return (
@@ -226,10 +239,13 @@ export default function MyInfoScreen() {
         <Text className="text-black font-pretendard-semibold mb-2">포트폴리오</Text>
         <TouchableOpacity
           onPress={handlePickPortfolio}
+          disabled={isSummarizing}
           className="h-40 mb-8 px-4 bg-gray-100 rounded-xl border border-gray-300 justify-center items-center gap-1"
         >
           <Image source={PdfImg} style={{ width: 28, height: 28 }} />
-          {portfolio ? (
+          {isSummarizing ? (
+            <Text className="text-gray-500 font-pretendard text-base text-center">AI가 포트폴리오를 분석하는 중...</Text>
+          ) : portfolio ? (
             <Text className="text-gray-500 font-pretendard text-base text-center">{portfolio.name}</Text>
           ) : (
             <>
