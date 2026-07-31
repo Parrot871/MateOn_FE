@@ -1,4 +1,5 @@
 // src/app/chatDetail.tsx (ChatRoomScreen)
+import { getPublicUserProfile } from '@/api/user';
 import { Back } from '@/assets/images/tool';
 import { ChatDateSeparator } from '@/components/ui/ChatDateSeparator';
 import { ChatInput } from '@/components/ui/ChatInput';
@@ -36,10 +37,28 @@ export default function ChatRoomScreen() {
   const { messages, isLoading, enterRoom, leaveRoom, sendMessage } =
     useChatRoomDetailStore();
   const { myUserId, loadMyUserId } = useAuthStore();
+  const [avatarCache, setAvatarCache] = useState<Record<number, string | null>>({});
+  const fetchedSenderIds = useRef(new Set<number>());
 
   useEffect(() => {
     loadMyUserId();
   }, []);
+
+  useEffect(() => {
+    const newSenderIds = Array.from(new Set(messages.map((m) => m.senderId))).filter(
+      (id) => !fetchedSenderIds.current.has(id)
+    );
+    if (newSenderIds.length === 0) return;
+
+    newSenderIds.forEach((senderId) => {
+      fetchedSenderIds.current.add(senderId);
+      getPublicUserProfile(senderId)
+        .then((profile) => {
+          setAvatarCache((prev) => ({ ...prev, [senderId]: profile.profileImageUrl }));
+        })
+        .catch(() => {});
+    });
+  }, [messages]);
 
   useEffect(() => {
     if (!roomId) return;
@@ -72,7 +91,11 @@ export default function ChatRoomScreen() {
     item.type === 'date' ? (
       <ChatDateSeparator date={item.date} />
     ) : (
-      <MessageBubble message={item.message} isMine={item.message.senderId === myUserId} />
+      <MessageBubble
+        message={item.message}
+        isMine={item.message.senderId === myUserId}
+        avatarUrl={avatarCache[item.message.senderId]}
+      />
     );
 
   return (

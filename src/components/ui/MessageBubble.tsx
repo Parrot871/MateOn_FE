@@ -1,14 +1,16 @@
 // src/components/ui/MessageBubble.tsx
 import type { StompChatMessage } from '@/types/chat';
 import { formatChatTime } from '@/utils/formatChatTime';
+import { Image } from 'expo-image';
 import { Text, View } from 'react-native';
 
 interface Props {
   message: StompChatMessage;
   isMine: boolean;
+  avatarUrl?: string | null;
 }
 
-export function MessageBubble({ message, isMine }: Props) {
+export function MessageBubble({ message, isMine, avatarUrl }: Props) {
   if (isMine) {
     return (
       <View className="px-4 mb-3 items-end">
@@ -24,10 +26,13 @@ export function MessageBubble({ message, isMine }: Props) {
     );
   }
 
-  // 받은 메시지: 프로필 사진이 아직 없어서 회색 원으로 자리만 표시
   return (
     <View className="px-4 mb-3 flex-row items-start">
-      <View className="w-9 h-9 rounded-full bg-gray-300 mr-2" />
+      <View className="w-9 h-9 rounded-full bg-gray-300 mr-2 overflow-hidden">
+        {avatarUrl && (
+          <Image source={{ uri: avatarUrl }} style={{ width: 36, height: 36 }} contentFit="cover" />
+        )}
+      </View>
       <View className="items-start flex-1">
         <Text className="text-xs text-gray-500 mb-1">{message.senderName}</Text>
         <View className="flex-row items-end">
