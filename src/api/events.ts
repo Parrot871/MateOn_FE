@@ -323,10 +323,19 @@ export async function extractEventImage(
     signal,
   });
 
+  if (response.status === 413) {
+    throw new Error('이미지 용량이 너무 커요. 1MB 이하로 줄여서 다시 시도해주세요.');
+  }
+
   const text = await response.text();
   console.log('[extractEventImage] status:', response.status, 'body:', text.slice(0, 300));
 
-  const result: ApiResponse<EventExtractionDraft> | null = text ? JSON.parse(text) : null;
+  let result: ApiResponse<EventExtractionDraft> | null = null;
+  try {
+    result = text ? JSON.parse(text) : null;
+  } catch {
+    throw new Error(`이미지 분석 중 오류가 발생했어요. (status: ${response.status})`);
+  }
 
   if (!response.ok || !result?.success) {
     throw new Error(result?.message || `이미지 추출 실패: ${response.status}`);
