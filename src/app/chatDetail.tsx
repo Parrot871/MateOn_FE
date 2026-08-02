@@ -36,7 +36,7 @@ export default function ChatRoomScreen() {
 
   const { messages, isLoading, enterRoom, leaveRoom, sendMessage } =
     useChatRoomDetailStore();
-  const { myUserId, loadMyUserId } = useAuthStore();
+  const { myUserId, isLoaded, loadMyUserId } = useAuthStore();
   const [avatarCache, setAvatarCache] = useState<Record<number, string | null>>({});
   const fetchedSenderIds = useRef(new Set<number>());
 
@@ -97,6 +97,14 @@ export default function ChatRoomScreen() {
         avatarUrl={avatarCache[item.message.senderId]}
       />
     );
+
+    if (!isLoaded) {
+    return (
+      <SafeAreaView className="flex-1 bg-white items-center justify-center" edges={['bottom']}>
+        <ActivityIndicator />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['bottom']}>

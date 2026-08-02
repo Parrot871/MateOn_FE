@@ -6,6 +6,7 @@ interface AuthState {
   myUserId: number | null;
   isLoaded: boolean;
   loadMyUserId: () => Promise<void>;
+  resetAuth: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -13,7 +14,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isLoaded: false,
 
   loadMyUserId: async () => {
-    if (get().isLoaded) return; // 이미 불러왔으면 재호출 안 함
+    if (get().isLoaded) return;
     try {
       const profile = await getMyProfile();
       set({ myUserId: profile.id, isLoaded: true });
@@ -21,4 +22,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       console.error('내 프로필 조회 실패', e);
     }
   },
+
+  resetAuth: () => set({ myUserId: null, isLoaded: false }),
 }));

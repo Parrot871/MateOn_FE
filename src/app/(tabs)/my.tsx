@@ -5,10 +5,11 @@ import { clearTokens } from '@/api/tokenStorage';
 import { deleteProfileImage, getMyProfile, uploadProfileImage, type UserProfile } from '@/api/user';
 import { HappyLine } from '@/assets/icons';
 import { Back, Bookmark, FlagIcon, MypageMLogo, NotificationNewDot, ProfileUser, Star, UserIcon } from '@/assets/images/tool';
+import { useAuthStore } from '@/store/authStore';
 import { useTeamRecStore } from '@/store/teamRecStore';
 import { getUnivByEmail } from '@/utils/univ';
-import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
@@ -156,6 +157,7 @@ export default function MypageScreen() {
             onPress: () => {
               clearTokens();
               useTeamRecStore.getState().reset();
+              useAuthStore.getState().resetAuth();
               router.replace('/login');
             },
           },

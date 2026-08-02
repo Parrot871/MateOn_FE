@@ -10,6 +10,7 @@ interface Props {
   avatarUrl?: string | null;
 }
 
+// src/components/ui/MessageBubble.tsx
 export function MessageBubble({ message, isMine, avatarUrl }: Props) {
   if (isMine) {
     return (
@@ -37,7 +38,7 @@ export function MessageBubble({ message, isMine, avatarUrl }: Props) {
         <Text className="text-xs text-gray-500 mb-1">{message.senderName}</Text>
         <View className="flex-row items-end">
           <View className="max-w-[75%] rounded-3xl rounded-tl-none px-4 py-2 bg-gray-200">
-            <Text className="text-gray-900">{message.content}</Text>
+            <Text className="text-gray-900 text-lg">{message.content}</Text>
           </View>
           <Text className="text-[10px] text-gray-400 ml-1">
             {formatChatTime(message.createdAt)}
