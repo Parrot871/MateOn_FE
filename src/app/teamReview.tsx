@@ -17,18 +17,6 @@ type QuestionKey = (typeof QUESTIONS)[number]['key'];
 type Ratings = Record<QuestionKey, number>;
 const EMPTY_RATINGS: Ratings = { contribution: 0, diligence: 0, respect: 0 };
 
-// 테스트용 더미 팀 — 실제 API 없이 UI 흐름만 확인할 때 사용. teamId를 음수로 둬서 실서버 팀과 절대 겹치지 않게 한다.
-const DUMMY_TEAM: TeamReviewTargets = {
-  teamId: -1,
-  teamTitle: '[더미] IT 서비스 기획 공고전 팀원 모집',
-  endedAt: new Date().toISOString(),
-  reviewDeadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-  targets: [
-    { userId: -1, name: '김단국', major: '단국대학교 소프트웨어학과', alreadyReviewed: false },
-    { userId: -2, name: '김루미', major: '서울대학교 의학과', alreadyReviewed: false },
-  ],
-};
-
 function StarRating({ value, onChange }: { value: number; onChange: (value: number) => void }) {
   return (
     <View className="flex-row gap-3">
@@ -138,13 +126,6 @@ export default function TeamReviewScreen() {
         };
       });
 
-      if (activeTeam.teamId === DUMMY_TEAM.teamId) {
-        // 더미 팀은 실제 서버로 제출하지 않고 UI 흐름만 확인한다.
-        closeFlow();
-        Alert.alert('평가 완료 (더미)', '실제 서버에는 제출되지 않았어요.');
-        return;
-      }
-
       setIsSubmitting(true);
       try {
         await submitTeamReviews(activeTeam.teamId, reviews);
@@ -187,7 +168,7 @@ export default function TeamReviewScreen() {
         </View>
       ) : (
         <View className="px-5 gap-3">
-          {[DUMMY_TEAM, ...teams].map((team) => {
+          {teams.map((team) => {
             const needsReview = team.targets.some((t) => !t.alreadyReviewed);
             return (
               <TouchableOpacity

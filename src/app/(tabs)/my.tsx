@@ -1,4 +1,4 @@
-import { getMyApplications } from '@/api/apply';
+import { getMyApplications, getReceivedOffers } from '@/api/apply';
 import { fetchBookmarkedEventIds } from '@/api/events';
 import { getMyTeams, getTeamReviewTargets } from '@/api/team';
 import { clearTokens } from '@/api/tokenStorage';
@@ -70,9 +70,14 @@ export default function MypageScreen() {
         .then(setProfile)
         .catch((error) => console.error('내 정보 조회 실패:', error));
 
-      getMyApplications()
-        .then((data) => setApplicationCount(data.length))
-        .catch((error) => console.error('지원서 목록 조회 실패:', error));
+      Promise.all([
+      getMyApplications().catch(() => []),
+      getReceivedOffers().catch(() => []),
+    ])
+      .then(([applications, offers]) => {
+        setApplicationCount(applications.length + offers.length);
+      })
+      .catch((error) => console.error('지원 및 제안 목록 조회 실패:', error));
 
       getMyTeams()
         .then((data) => setMyTeamCount(data.length))

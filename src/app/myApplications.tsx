@@ -325,7 +325,7 @@ export default function MyApplicationsScreen() {
             return (
               <View
                 key={offer.offerId}
-                className="bg-white border border-gray-100/80 rounded-3xl px-4 pt-4
+                className="bg-white border border-gray-100/80 rounded-3xl p-4
                  mb-3 shadow-sm"
                 style={{ elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8 }}
               >
