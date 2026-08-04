@@ -1,7 +1,7 @@
-import { computeDDay, fetchEventDetail } from '@/api/events';
+import { computeDDay } from '@/api/events';
 import { getRecommendedTeams, MatchingIntentRequiredError, type TeamRecommendation } from '@/api/team';
-import { Alarm, Back, Bookmark, DateIcon, Point } from '@/assets/images/tool';
 import { GroupFill } from '@/assets/icons';
+import { Alarm, Back, Bookmark, DateIcon, Point } from '@/assets/images/tool';
 import { useBookmarkedEventIds } from '@/hooks/useBookmarkedEvents';
 import { useSchoolVerified } from '@/hooks/useSchoolVerified';
 import { useEventDetailStore } from '@/store/eventDetailStore';
@@ -45,23 +45,23 @@ export default function EventInfoScreen() {
   const schoolVerified = useSchoolVerified();
 
   useEffect(() => {
-    if (!event) return;
+  if (!event) return;
 
-    // TODO: /api/events/{id} 응답에 모집중인 팀 정보가 포함되는지 확인 중인 임시 디버그 로그
-    fetchEventDetail(event.id).catch((error) => console.warn('[fetchEventDetail] 실패', error));
+  setIsLoadingTeams(true);
+  setNeedsMatchingIntent(false);
 
-    getRecommendedTeams({ eventId: event.id })
-      .then(setTeams)
-      .catch((error) => {
-        if (error instanceof MatchingIntentRequiredError) {
-          setNeedsMatchingIntent(true);
-        } else {
-          console.warn('[getRecommendedTeams] 실패', error);
-        }
-        setTeams([]);
-      })
-      .finally(() => setIsLoadingTeams(false));
-  }, [event]);
+  getRecommendedTeams({ eventId: event.id })
+    .then(setTeams)
+    .catch((error) => {
+      if (error instanceof MatchingIntentRequiredError) {
+        setNeedsMatchingIntent(true);
+      } else {
+        console.warn('[getRecommendedTeams] 실패', error);
+      }
+      setTeams([]);
+    })
+    .finally(() => setIsLoadingTeams(false));
+}, [event]);
 
   if (!event) {
     return (
