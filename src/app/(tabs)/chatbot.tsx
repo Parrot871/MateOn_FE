@@ -1,6 +1,7 @@
 import { sendChatbotMessage } from '@/api/chatbot';
 import { consumeJustSignedUp } from '@/api/tokenStorage';
 import { Back } from '@/assets/images/tool';
+import { useTeamRecStore } from '@/store/teamRecStore';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
@@ -26,6 +27,7 @@ export default function ChatBotScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
+  const fetchTeamRec = useTeamRecStore((state) => state.fetchTeamRec);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isSending, setIsSending] = useState(false);
@@ -67,6 +69,11 @@ export default function ChatBotScreen() {
     try {
       const result = await sendChatbotMessage(text);
       setMessages((prev) => [...prev, { id: `${Date.now()}-bot`, role: 'bot', text: result.assistantMessage }]);
+
+      if (result.completed) {
+        await fetchTeamRec({ force: true });
+        router.replace('/teamRecommendationResult');
+      }
     } catch (error) {
       setMessages((prev) => [
         ...prev,

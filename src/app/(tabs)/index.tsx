@@ -27,6 +27,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CARD_GAP = 12;
 const CARD_WIDTH = SCREEN_WIDTH * 0.8;
+const TEAM_REC_CARD_WIDTH = SCREEN_WIDTH - 40;
 const MY_TEAM_CARD_WIDTH = SCREEN_WIDTH * 0.75;
 
 const BANNER_WIDTH = SCREEN_WIDTH - 40;
@@ -253,30 +254,30 @@ export default function HomeScreen() {
           )}
 
           {teamRec.status === 'error' && (
-            <View className="bg-gray-50 rounded-2xl p-5 items-center">
-              <Text className="text-gray-500 mb-2">드림이 챗봇에서 먼저 의도 추출 검사를 해주세요.</Text>
+            <View className="bg-gray-50 rounded-2xl p-5 items-center gap-3">
+              <Text className="text-gray-500 text-center">
+                맞춤 팀 추천을 보려면 드림 챗봇에서 먼저 나의 선호 조건을 알려주세요.
+              </Text>
+              <TouchableOpacity
+                onPress={() => router.push('/chatbot')}
+                className="bg-[#3E6AF4] px-4 py-2.5 rounded-full"
+              >
+                <Text className="text-white font-pretendard-semibold">챗봇으로 추천 조건 설정하기</Text>
+              </TouchableOpacity>
             </View>
           )}
 
           {teamRec.status === 'ready' && (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              decelerationRate="fast"
-              snapToInterval={CARD_WIDTH + CARD_GAP}
-              snapToAlignment="start"
-              contentContainerStyle={{ paddingRight: 20, gap: CARD_GAP }}
-              style={{ marginHorizontal: -20, paddingLeft: 20 }}
-            >
+            <View className="gap-3">
               {teamRec.teams.slice(0, 3).map((team) => (
                 <TeamRecommendationCard
                   key={team.teamId}
                   team={team}
-                  width={CARD_WIDTH}
+                  width={TEAM_REC_CARD_WIDTH}
                   onPress={() => router.push({ pathname: '/teamDetail', params: { teamId: team.teamId } })}
                 />
               ))}
-            </ScrollView>
+            </View>
           )}
         </View>
       </ScrollView>
