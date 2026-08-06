@@ -1,17 +1,19 @@
 import { getMyApplications, getReceivedOffers } from '@/api/apply';
 import { fetchBookmarkedEventIds } from '@/api/events';
+import { getMyNotifications } from '@/api/notification';
 import { getMyTeams, getTeamReviewTargets } from '@/api/team';
-import { clearTokens } from '@/api/tokenStorage';
+import { clearTokens, getAccessToken } from '@/api/tokenStorage';
 import { deleteProfileImage, getMyProfile, uploadProfileImage, type UserProfile } from '@/api/user';
-import { HappyLine } from '@/assets/icons';
+import { HappyLine, NotificationLine } from '@/assets/icons';
 import { Back, Bookmark, FlagIcon, MypageMLogo, NotificationNewDot, ProfileUser, Star, UserIcon } from '@/assets/images/tool';
+import { useNotificationSSE } from '@/hooks/useNotificationSSE';
 import { useAuthStore } from '@/store/authStore';
 import { useTeamRecStore } from '@/store/teamRecStore';
 import { getUnivByEmail } from '@/utils/univ';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Alert, Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -62,6 +64,8 @@ export default function MypageScreen() {
   const [bookmarkCount, setBookmarkCount] = useState(0);
   const [localImageUri, setLocalImageUri] = useState<string | null>(null);
   const [photoSheetVisible, setPhotoSheetVisible] = useState(false);
+  const [hasUnread, setHasUnread] = useState(false);
+  const { notifications: sseNotifications } = useNotificationSSE();
   const univ = getUnivByEmail(profile?.schoolEmail ?? profile?.email);
 
   useFocusEffect(
@@ -69,6 +73,14 @@ export default function MypageScreen() {
       getMyProfile()
         .then(setProfile)
         .catch((error) => console.error('내 정보 조회 실패:', error));
+
+      getAccessToken().then((token) => {
+        if (!token) return;
+
+        getMyNotifications()
+          .then((list) => setHasUnread(list.some((n) => !n.isRead)))
+          .catch(console.error);
+      });
 
       Promise.all([
       getMyApplications().catch(() => []),
@@ -92,6 +104,12 @@ export default function MypageScreen() {
         .catch((error) => console.error('북마크 개수 조회 실패:', error));
     }, [])
   );
+
+  useEffect(() => {
+    if (sseNotifications.length > 0) {
+      setHasUnread(true);
+    }
+  }, [sseNotifications]);
 
   const handleChangePhoto = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -185,7 +203,11 @@ export default function MypageScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => router.push('/notification')}>
-          <Image source={NotificationNewDot} style={{ width: 30, height: 30 }} contentFit="contain" />
+          <Image
+            source={hasUnread ? NotificationNewDot : NotificationLine}
+            style={{ width: 30, height: 30 }}
+            contentFit="contain"
+          />
         </TouchableOpacity>
       </View>
 
@@ -261,29 +283,35 @@ export default function MypageScreen() {
       <Text className="text-black text-xl font-pretendard-bold mb-1">계정 설정</Text>
 
       <View className="border-t border-gray-100">
-        {SETTINGS.map((setting, index) => (
-          <TouchableOpacity
-            key={setting.label}
-            onPress={setting.onPress}
-            className={`flex-row justify-between items-center py-4 ${
-              index !== SETTINGS.length - 1 ? 'border-b border-gray-100' : ''
-            }`}
-          >
-            <View className="flex-row items-center">
-              <Text className="text-black text-lg font-pretendard">{setting.label}</Text>
-              {setting.label === '학교 인증' && profile?.schoolVerified && (
-                <View className="ml-2 px-2 py-0.5 rounded-full bg-green-50">
-                  <Text className="text-green-600 text-sm font-pretendard-semibold">인증 완료됨</Text>
-                </View>
+        {SETTINGS.map((setting, index) => {
+          const isVerifiedSchoolAuth = setting.label === '학교 인증' && profile?.schoolVerified;
+          return (
+            <TouchableOpacity
+              key={setting.label}
+              onPress={setting.onPress}
+              disabled={isVerifiedSchoolAuth}
+              className={`flex-row justify-between items-center py-4 ${
+                index !== SETTINGS.length - 1 ? 'border-b border-gray-100' : ''
+              }`}
+            >
+              <View className="flex-row items-center">
+                <Text className="text-black text-lg font-pretendard">{setting.label}</Text>
+                {isVerifiedSchoolAuth && (
+                  <View className="ml-2 px-2 py-0.5 rounded-full bg-green-50">
+                    <Text className="text-green-600 text-sm font-pretendard-semibold">인증 완료됨</Text>
+                  </View>
+                )}
+              </View>
+              {!isVerifiedSchoolAuth && (
+                <Image
+                  source={Back}
+                  style={{ width: 14, height: 14, transform: [{ rotate: '180deg' }] }}
+                  contentFit="contain"
+                />
               )}
-            </View>
-            <Image
-              source={Back}
-              style={{ width: 14, height: 14, transform: [{ rotate: '180deg' }] }}
-              contentFit="contain"
-            />
-          </TouchableOpacity>
-        ))}
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </ScrollView>
 

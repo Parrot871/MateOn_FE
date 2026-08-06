@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function isRecruitmentOpen(team: TeamPost): boolean {
   return (
@@ -22,6 +23,7 @@ function isRecruitmentOpen(team: TeamPost): boolean {
 
 export default function MyTeamLeaderScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [status, setStatus] = useState<"loading" | "ready" | "error">(
     "loading",
   );
@@ -39,19 +41,25 @@ export default function MyTeamLeaderScreen() {
   );
 
   return (
-    <View className="flex-1 bg-white">
-      <View className="flex-row items-center justify-between px-6 pt-20 pb-10">
-        <TouchableOpacity onPress={() => router.back()}>
+    <View className="flex-1 bg-gray-50/60">
+      <View
+        className="px-5 bg-white border-b border-gray-100 flex-row items-center justify-between"
+        style={{ paddingTop: Math.max(insets.top, 16) + 6, paddingBottom: 14 }}
+      >
+        <TouchableOpacity
+          onPress={() => router.back()}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          className="w-8 h-8 justify-center items-start"
+        >
           <Image
             source={Back}
             style={{ width: 26, height: 26 }}
             contentFit="contain"
           />
         </TouchableOpacity>
-        <Text className="text-black text-2xl font-pretendard-bold">
+        <Text className="text-gray-900 text-2xl font-pretendard-bold flex-1 text-center mr-8 tracking-tight">
           모집한 팀
         </Text>
-        <View style={{ width: 26, height: 26 }} />
       </View>
 
       {status === "loading" ? (
@@ -85,7 +93,7 @@ export default function MyTeamLeaderScreen() {
       ) : (
         <ScrollView
           className="flex-1 px-5"
-          contentContainerClassName="gap-3 pb-10"
+          contentContainerClassName="gap-3 pt-4 pb-10"
         >
           {teams.map((team) => {
             const recruiting = isRecruitmentOpen(team);

@@ -35,10 +35,11 @@ export default function ChatListScreen() {
 
   return (
     <View className="flex-1">
-      <View className="px-5 pt-20 pb-6 bg-white">
-        <View className="flex-row justify-between items-center">
-          <Text className="text-3xl font-bold">채팅</Text>
-        </View>
+      <View
+        className="px-5 bg-white border-b border-gray-100 flex-row items-center justify-between"
+        style={{ paddingTop: Math.max(insets.top, 16) + 6, paddingBottom: 14 }}
+      >
+        <Text className="text-3xl font-bold">채팅</Text>
       </View>
 
       {isLoading && rooms.length === 0 ? (
