@@ -1,4 +1,4 @@
-import { Back } from '@/assets/images/tool';
+import { X } from '@/assets/images/tool';
 import TeamRecommendationCard from '@/components/ui/TeamRecommendationCard';
 import { useTeamRecStore } from '@/store/teamRecStore';
 import { Image } from 'expo-image';
@@ -10,7 +10,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CARD_WIDTH = SCREEN_WIDTH - 40;
 
-export default function TeamRecommendationResultScreen() {
+type Props = {
+  onClose: () => void;
+};
+
+export default function TeamRecommendationResultContent({ onClose }: Props) {
   const router = useRouter();
   const { teamRec, fetchTeamRec, hasHydrated } = useTeamRecStore();
 
@@ -22,11 +26,11 @@ export default function TeamRecommendationResultScreen() {
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
       <View className="flex-row items-center justify-between px-6 py-3 border-b border-gray-100">
-        <TouchableOpacity onPress={() => router.replace('/(tabs)')}>
-          <Image source={Back} style={{ width: 26, height: 26 }} contentFit="contain" />
-        </TouchableOpacity>
-        <Text className="text-black text-2xl font-pretendard-bold">팀 추천 결과</Text>
         <View style={{ width: 26, height: 26 }} />
+        <Text className="text-black text-2xl font-pretendard-bold">팀 추천 결과</Text>
+        <TouchableOpacity onPress={onClose}>
+          <Image source={X} style={{ width: 26, height: 26 }} contentFit="contain" />
+        </TouchableOpacity>
       </View>
 
       <ScrollView className="flex-1 px-5 pt-5" contentContainerStyle={{ paddingBottom: 32 }}>

@@ -1,11 +1,14 @@
 import { sendChatbotMessage } from '@/api/chatbot';
 import { consumeJustSignedUp } from '@/api/tokenStorage';
 import { Back } from '@/assets/images/tool';
+import TeamRecommendationResultContent from '@/components/ui/TeamRecommendationResultContent';
 import { useTeamRecStore } from '@/store/teamRecStore';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
+  Animated,
+  Dimensions,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -16,6 +19,8 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 type ChatMessage = {
   id: string;
@@ -32,6 +37,10 @@ export default function ChatBotScreen() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  // 팀 추천 결과 오버레이 상태 + 애니메이션 값
+  const [showResult, setShowResult] = useState(false);
+  const translateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
 
   useEffect(() => {
     consumeJustSignedUp().then((justSignedUp) => {
@@ -58,6 +67,28 @@ export default function ChatBotScreen() {
     };
   }, []);
 
+  // 팀 추천 결과를 아래에서 위로 올리며 오픈
+  const openResult = () => {
+    setShowResult(true);
+    Animated.timing(translateY, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  // X 버튼: 위에서 아래로 내리면서 닫고, 애니메이션이 끝난 뒤 홈 탭으로 이동
+  const closeResultToHome = () => {
+    Animated.timing(translateY, {
+      toValue: SCREEN_HEIGHT,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      setShowResult(false);
+      router.replace('/(tabs)');
+    });
+  };
+
   const handleSend = async () => {
     const text = input.trim();
     if (!text || isSending) return;
@@ -72,7 +103,7 @@ export default function ChatBotScreen() {
 
       if (result.completed) {
         await fetchTeamRec({ force: true });
-        router.replace('/teamRecommendationResult');
+        openResult();
       }
     } catch (error) {
       setMessages((prev) => [
@@ -90,69 +121,89 @@ export default function ChatBotScreen() {
   };
 
   return (
-    <KeyboardAvoidingView className="flex-1 bg-white" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <View className="flex-row items-center justify-between px-6 pt-20 pb-6">
-        <TouchableOpacity onPress={() => router.back()}>
-          <Image source={Back} style={{ width: 26, height: 26 }} contentFit="contain" />
-        </TouchableOpacity>
-        <Text className="text-black text-2xl font-pretendard-bold">챗봇</Text>
-        <View style={{ width: 26, height: 26 }} />
-      </View>
+    <View style={{ flex: 1 }}>
+      <KeyboardAvoidingView className="flex-1 bg-white" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <View className="flex-row items-center justify-between px-6 pt-20 pb-6">
+          <TouchableOpacity onPress={() => router.back()}>
+            <Image source={Back} style={{ width: 26, height: 26 }} contentFit="contain" />
+          </TouchableOpacity>
+          <Text className="text-black text-2xl font-pretendard-bold">챗봇</Text>
+          <View style={{ width: 26, height: 26 }} />
+        </View>
 
-      <ScrollView
-        ref={scrollRef}
-        className="flex-1 px-5"
-        contentContainerClassName="gap-3 pb-4"
-        onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
-      >
-        {messages.map((message) =>
-          message.role === 'bot' ? (
-            <View key={message.id} className="flex-row self-start max-w-[80%] gap-2">
-              <Image
-                source={require('@/assets/icons/dreamy.png')}
-                style={{ width: 32, height: 32, borderRadius: 16 }}
-                contentFit="cover"
-              />
-              <View className="flex-1">
-                <Text className="text-gray-500 text-xs font-pretendard mb-1">드리미</Text>
-                <View className="px-4 py-3 rounded-2xl bg-gray-100 self-start">
-                  <Text className="font-pretendard text-base text-black">{message.text}</Text>
+        <ScrollView
+          ref={scrollRef}
+          className="flex-1 px-5"
+          contentContainerClassName="gap-3 pb-4"
+          onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
+        >
+          {messages.map((message) =>
+            message.role === 'bot' ? (
+              <View key={message.id} className="flex-row self-start max-w-[80%] gap-2">
+                <Image
+                  source={require('@/assets/icons/dreamy.png')}
+                  style={{ width: 32, height: 32, borderRadius: 16 }}
+                  contentFit="cover"
+                />
+                <View className="flex-1">
+                  <Text className="text-gray-500 text-xs font-pretendard mb-1">드리미</Text>
+                  <View className="px-4 py-3 rounded-2xl bg-gray-100 self-start">
+                    <Text className="font-pretendard text-base text-black">{message.text}</Text>
+                  </View>
                 </View>
               </View>
-            </View>
-          ) : (
-            <View key={message.id} className="self-end max-w-[80%] px-4 py-3 rounded-2xl bg-[#3E6AF4]">
-              <Text className="font-pretendard text-base text-white">{message.text}</Text>
-            </View>
-          )
-        )}
-      </ScrollView>
+            ) : (
+              <View key={message.id} className="self-end max-w-[80%] px-4 py-3 rounded-2xl bg-[#3E6AF4]">
+                <Text className="font-pretendard text-base text-white">{message.text}</Text>
+              </View>
+            )
+          )}
+        </ScrollView>
 
-      <View
-        className="flex-row items-center gap-2 px-5 pt-3 border-t border-gray-100 bg-white"
-        style={{ paddingBottom: insets.bottom }}
-      >
-        <TextInput
-          value={input}
-          onChangeText={setInput}
-          placeholder="메시지를 입력해주세요"
-          placeholderTextColor="#9CA3AF"
-          onSubmitEditing={handleSend}
-          returnKeyType="send"
-          className="flex-1 h-12 px-4 bg-gray-100 rounded-full text-black font-pretendard"
-        />
-        <TouchableOpacity
-          onPress={handleSend}
-          disabled={!input.trim() || isSending}
-          className={`h-12 px-5 rounded-full justify-center items-center ${
-            input.trim() ? 'bg-[#3E6AF4]' : 'bg-[#3E6AF4]/40'
-          }`}
+        <View
+          className="flex-row items-center gap-2 px-5 pt-3 border-t border-gray-100 bg-white"
+          style={{ paddingBottom: insets.bottom }}
         >
-          <Text className="text-white font-pretendard-semibold">전송</Text>
-        </TouchableOpacity>
-      </View>
+          <TextInput
+            value={input}
+            onChangeText={setInput}
+            placeholder="메시지를 입력해주세요"
+            placeholderTextColor="#9CA3AF"
+            onSubmitEditing={handleSend}
+            returnKeyType="send"
+            className="flex-1 h-12 px-4 bg-gray-100 rounded-full text-black font-pretendard"
+          />
+          <TouchableOpacity
+            onPress={handleSend}
+            disabled={!input.trim() || isSending}
+            className={`h-12 px-5 rounded-full justify-center items-center ${
+              input.trim() ? 'bg-[#3E6AF4]' : 'bg-[#3E6AF4]/40'
+            }`}
+          >
+            <Text className="text-white font-pretendard-semibold">전송</Text>
+          </TouchableOpacity>
+        </View>
 
-      {!isKeyboardVisible && <View className="bg-white" style={{ height: 70 }} />}
-    </KeyboardAvoidingView>
+        {!isKeyboardVisible && <View className="bg-white" style={{ height: 70 }} />}
+      </KeyboardAvoidingView>
+
+      {/* 팀 추천 결과 오버레이 */}
+      {showResult && (
+        <Animated.View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'white',
+            zIndex: 50,
+            transform: [{ translateY }],
+          }}
+        >
+          <TeamRecommendationResultContent onClose={closeResultToHome} />
+        </Animated.View>
+      )}
+    </View>
   );
 }
