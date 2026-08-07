@@ -99,14 +99,16 @@ export default function NotificationScreen() {
   return (
     <View className="flex-1 bg-white">
       {/* Header & Tabs Container */}
-      <View className="bg-white border-b border-gray-200">
+      <View className="bg-white border-b border-gray-100">
         {/* 헤더 */}
         <View
           className="px-5 flex-row items-center justify-between"
           style={{ paddingTop: Math.max(insets.top, 16) + 6, paddingBottom: 14 }}
         >
           <View style={{ width: 26, height: 26 }} />
-          <Text className="text-black text-2xl font-pretendard-bold flex-1 text-center mr-8">알림</Text>
+          <Text className="text-gray-900 text-2xl font-pretendard-bold flex-1 text-center tracking-tight">
+            알림
+          </Text>
           <TouchableOpacity onPress={() => router.back()}>
             <Image source={X} style={{ width: 24, height: 24 }} contentFit="contain" />
           </TouchableOpacity>

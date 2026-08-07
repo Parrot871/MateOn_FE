@@ -6,6 +6,7 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Modal, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const QUESTIONS = [
   { key: 'contribution', label: '프로젝트에 얼마나 기여했나요?' },
@@ -31,6 +32,7 @@ function StarRating({ value, onChange }: { value: number; onChange: (value: numb
 
 export default function TeamReviewScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [teams, setTeams] = useState<TeamReviewTargets[]>([]);
 
@@ -147,13 +149,21 @@ export default function TeamReviewScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
-      <View className="flex-row items-center justify-between px-6 pt-20 pb-10">
-        <TouchableOpacity onPress={() => router.back()}>
+    <View className="flex-1 bg-gray-50/60">
+      <View
+        className="px-5 bg-white border-b border-gray-100 flex-row items-center justify-between"
+        style={{ paddingTop: Math.max(insets.top, 16) + 6, paddingBottom: 14 }}
+      >
+        <TouchableOpacity
+          onPress={() => router.back()}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          className="w-8 h-8 justify-center items-start"
+        >
           <Image source={Back} style={{ width: 26, height: 26 }} contentFit="contain" />
         </TouchableOpacity>
-        <Text className="text-black text-2xl font-pretendard-bold">팀원 평가</Text>
-        <View style={{ width: 26, height: 26 }} />
+        <Text className="text-gray-900 text-2xl font-pretendard-bold flex-1 text-center mr-8 tracking-tight">
+          팀원 평가
+        </Text>
       </View>
 
       {status === 'error' && (
@@ -165,6 +175,10 @@ export default function TeamReviewScreen() {
       {status === 'loading' ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator color="#3E6AF4" />
+        </View>
+      ) : status === 'ready' && teams.length === 0 ? (
+        <View className="py-24 items-center justify-center px-8">
+          <Text className="text-gray-400 font-pretendard text-base">아직 평가할 팀원이 없어요.</Text>
         </View>
       ) : (
         <View className="px-5 gap-3">
