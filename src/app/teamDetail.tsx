@@ -443,7 +443,7 @@ function TeamDetailContent({
           <View className="flex-1 items-center">
             <Text className="text-gray-400 text-xs font-pretendard-medium mb-1">모집 인원</Text>
             <Text className="text-gray-900 text-base font-pretendard-bold">
-              {data.capacity}명
+              {data.capacity - 1}명
             </Text>
           </View>
           <View className="w-[1px] h-6 bg-gray-200" />

@@ -22,10 +22,10 @@ async function authHeaders() {
 }
 
 export async function requestEmailCode(email: string) {
-  const response = await fetch(`${API_BASE_URL}/api/auth/email/request`, {
+  const response = await fetch(`${API_BASE_URL}/api/auth/school/email/request`, {
     method: 'POST',
     headers: await authHeaders(),
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ schoolEmail: email }),
   });
 
   const result: ApiResponse<null> = await response.json();
@@ -38,10 +38,10 @@ export async function requestEmailCode(email: string) {
 }
 
 export async function verifyEmailCode(email: string, code: string) {
-  const response = await fetch(`${API_BASE_URL}/api/auth/email/verify`, {
+  const response = await fetch(`${API_BASE_URL}/api/auth/school/email/verify`, {
     method: 'POST',
     headers: await authHeaders(),
-    body: JSON.stringify({ email, code }),
+    body: JSON.stringify({ schoolEmail: email, code }),
   });
 
   const result: ApiResponse<{ verificationToken: string }> = await response.json();

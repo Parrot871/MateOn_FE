@@ -132,7 +132,7 @@ export default function TeamReviewScreen() {
       try {
         await submitTeamReviews(activeTeam.teamId, reviews);
         closeFlow();
-        Alert.alert('평가 완료', '팀원 평가가 제출됐어요.');
+        Alert.alert('평가 완료', '팀원 평가가 제출됐어요.', [{ text: '확인' }]);
         loadTeams();
       } catch (error) {
         Alert.alert(
@@ -181,7 +181,7 @@ export default function TeamReviewScreen() {
           <Text className="text-gray-400 font-pretendard text-base">아직 평가할 팀원이 없어요.</Text>
         </View>
       ) : (
-        <View className="px-5 gap-3">
+        <View className="px-5 py-5 gap-3">
           {teams.map((team) => {
             const needsReview = team.targets.some((t) => !t.alreadyReviewed);
             return (

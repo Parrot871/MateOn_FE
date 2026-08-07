@@ -129,7 +129,8 @@ export default function TeamEditScreen() {
             : null,
         );
         setTitle(data.title);
-        setCapacity(data.capacity);
+        // capacity는 팀장 포함 총원으로 저장돼 있어서, 모집인원 입력값으로 되돌린다 (createTeamRecruitment와 대칭).
+        setCapacity(Math.max(1, data.capacity - 1));
         setStartDate(parseIsoDate(data.recruitmentStartDate));
         setEndDate(parseIsoDate(data.recruitmentEndDate));
         setRoles(data.role);
@@ -192,7 +193,7 @@ export default function TeamEditScreen() {
         role: roles,
         characteristic: characteristic.trim() || undefined,
         requiredSkills: skills.length > 0 ? skills : undefined,
-        capacity,
+        capacity: capacity + 1,
         recruitmentStartDate: formatIsoDate(startDate),
         recruitmentEndDate: formatIsoDate(endDate),
       });

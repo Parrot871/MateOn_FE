@@ -32,6 +32,7 @@ export async function getMyProfile() {
 
   const response = await fetch(`${API_BASE_URL}/api/users/me`, {
     headers: { Authorization: `Bearer ${accessToken}` },
+    cache: 'no-store',
   });
 
   const text = await response.text();
@@ -51,8 +52,12 @@ export type UpdateProfilePayload = {
   interestJobPrimary: string;
   interestJobSecondary: string;
   interestJobTertiary: string;
-  schoolEmail?: string;
+  schoolEmail?: string | null;
+  schoolVerified?: boolean;
+  profileImageUrl?: string | null;
   tagline?: string | null;
+  // schoolEmail 변경 시, 실제로 인증코드를 검증했다는 증명으로 함께 보낸다 (verifyEmailCode 응답값).
+  verificationToken?: string;
 };
 
 export async function updateProfile(payload: UpdateProfilePayload) {
@@ -69,9 +74,11 @@ export async function updateProfile(payload: UpdateProfilePayload) {
       Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify(payload),
+    cache: 'no-store',
   });
 
   const text = await response.text();
+  console.log('[updateProfile] status:', response.status, 'body:', text);
   const result: ApiResponse<UserProfile> | null = text ? JSON.parse(text) : null;
 
   if (!response.ok || !result?.success) {

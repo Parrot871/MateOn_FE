@@ -18,6 +18,7 @@ export default function SchoolVerifyScreen() {
   const [emailError, setEmailError] = useState<string | null>(null);
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
   const [isCodeVerified, setIsCodeVerified] = useState(false);
+  const [verificationToken, setVerificationToken] = useState<string | null>(null);
   const [codeError, setCodeError] = useState<string | null>(null);
   const [isCompleting, setIsCompleting] = useState(false);
 
@@ -57,7 +58,8 @@ export default function SchoolVerifyScreen() {
     setIsVerifyingCode(true);
     setCodeError(null);
     try {
-      await verifyEmailCode(email, code);
+      const token = await verifyEmailCode(email, code);
+      setVerificationToken(token);
       setIsCodeVerified(true);
     } catch (error) {
       setCodeError(error instanceof Error ? error.message : '인증코드 검증에 실패했습니다.');
@@ -67,12 +69,11 @@ export default function SchoolVerifyScreen() {
   };
 
   const handleComplete = async () => {
-    if (!isCodeVerified || isCompleting) return;
+    if (!isCodeVerified || !verificationToken || isCompleting) return;
 
     setIsCompleting(true);
     try {
       const profile = await getMyProfile();
-      console.log('[schoolVerify] before update:', JSON.stringify(profile));
       const updated = await updateProfile({
         name: profile.name,
         college: profile.college ?? '',
@@ -80,7 +81,10 @@ export default function SchoolVerifyScreen() {
         interestJobPrimary: profile.interestJobPrimary ?? '',
         interestJobSecondary: profile.interestJobSecondary ?? '',
         interestJobTertiary: profile.interestJobTertiary ?? '',
+        tagline: profile.tagline,
+        profileImageUrl: profile.profileImageUrl,
         schoolEmail: email,
+        schoolVerified: true,
       });
       console.log('[schoolVerify] after update:', JSON.stringify(updated));
       Alert.alert('학교 인증 완료', '학교 인증이 완료되었습니다.', [
@@ -132,6 +136,7 @@ export default function SchoolVerifyScreen() {
             onChangeText={(text) => {
               setCode(text);
               setIsCodeVerified(false);
+              setVerificationToken(null);
             }}
             placeholder="인증번호 6자리"
             placeholderTextColor="#9CA3AF"
