@@ -199,8 +199,9 @@ export async function fetchRecommendedEvents(signal?: AbortSignal): Promise<Even
     categories.map((category) => fetchEvents(category, signal).catch(() => []))
   );
   const all = results.flat();
+  const unique = Array.from(new Map(all.map((event) => [event.id, event])).values());
 
-  return [...all]
+  return unique
     .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
     .slice(0, 3);
 }

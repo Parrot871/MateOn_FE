@@ -21,6 +21,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { TouchableOpacity as GestureTouchableOpacity } from 'react-native-gesture-handler';
 import Carousel from 'react-native-reanimated-carousel';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -138,9 +139,9 @@ export default function HomeScreen() {
             scrollAnimationDuration={600}
             style={{ width: BANNER_WIDTH }}
             renderItem={({ item }) => (
-              <TouchableOpacity
+              <GestureTouchableOpacity
                 activeOpacity={0.9}
-                onPress={() => router.push(item.path as never)}
+                onPress={() => router.push({ pathname: './activity' })}
                 style={{ width: '100%', height: '100%' }}
               >
                 <Image
@@ -148,7 +149,7 @@ export default function HomeScreen() {
                   style={{ width: '100%', height: '100%', borderRadius: 16 }}
                   contentFit="cover"
                 />
-              </TouchableOpacity>
+              </GestureTouchableOpacity>
             )}
           />
         </View>

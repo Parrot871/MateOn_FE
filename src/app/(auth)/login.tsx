@@ -6,7 +6,7 @@ import { getProfile as getKakaoProfile, login as kakaoLogin } from '@react-nativ
 import { Image } from 'expo-image';
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -47,8 +47,11 @@ export default function LoginScreen() {
   };
 
   return (
-    <View className="flex-1 justify-center px-10 bg-[#8BA9FF]">
-      
+    <KeyboardAvoidingView
+      className="flex-1 justify-center px-10 bg-[#8BA9FF]"
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+
       <View className="items-center mb-8">
         <Image source={MateOnLogo} style={{ width: 150, height: 120 }} contentFit="contain" />
         <Text className="text-white text-5xl font-pretendard-medium">MateOn</Text>
@@ -111,6 +114,6 @@ export default function LoginScreen() {
           </Text>
         </TouchableOpacity>
       </Link>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
