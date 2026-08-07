@@ -32,7 +32,7 @@ const CATEGORY_OPTIONS: { label: string; value: EventCategory }[] = [
 
 const FIELD_OPTIONS = Object.entries(EVENT_FIELD_LABELS) as [EventField, string][];
 
-const MAX_FILE_SIZE = 1 * 1024 * 1024;
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 type FormState = {
   category: EventCategory | null;
@@ -141,7 +141,7 @@ export default function EventRegisterScreen() {
     const asset = result.assets[0];
 
     if (asset.fileSize && asset.fileSize > MAX_FILE_SIZE) {
-      Alert.alert('사진 용량 초과', '1MB 이하의 이미지만 업로드할 수 있어요.');
+      Alert.alert('사진 용량 초과', '10MB 이하의 이미지만 업로드할 수 있어요.');
       return;
     }
 
