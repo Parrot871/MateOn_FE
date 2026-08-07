@@ -240,7 +240,9 @@ export default function TeamRecruitScreen() {
         role: roles,
         characteristic: characteristic.trim() || undefined,
         requiredSkills: skills.length > 0 ? skills : undefined,
-        capacity,
+        // capacity는 팀장을 포함한 총원이라, 팀장(1명) + 모집인원으로 보낸다.
+        // 그렇지 않으면 모집인원 1명짜리 팀이 생성 즉시 "1/1"로 꽉 찬 것처럼 보인다.
+        capacity: capacity + 1,
         recruitmentStartDate: formatIsoDate(startDate),
         recruitmentEndDate: formatIsoDate(endDate),
       });

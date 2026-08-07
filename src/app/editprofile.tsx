@@ -66,6 +66,9 @@ export default function EditProfileScreen() {
   const [portfolio, setPortfolio] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
   const [tagline, setTagline] = useState<string | null>(null);
   const [isSummarizing, setIsSummarizing] = useState(false);
+  const [schoolEmail, setSchoolEmail] = useState<string | null>(null);
+  const [schoolVerified, setSchoolVerified] = useState(false);
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
 
   const handlePickPortfolio = async () => {
     const result = await DocumentPicker.getDocumentAsync({ type: 'application/pdf' });
@@ -102,6 +105,9 @@ export default function EditProfileScreen() {
         setJob2(profile.interestJobSecondary ?? '');
         setJob3(profile.interestJobTertiary ?? '');
         setTagline(profile.tagline ?? null);
+        setSchoolEmail(profile.schoolEmail);
+        setSchoolVerified(profile.schoolVerified);
+        setProfileImageUrl(profile.profileImageUrl);
       })
       .catch((error) => {
         Alert.alert('알림', error instanceof Error ? error.message : '내 정보를 불러오지 못했습니다.', [
@@ -126,6 +132,9 @@ export default function EditProfileScreen() {
         interestJobSecondary: job2,
         interestJobTertiary: job3,
         tagline,
+        schoolEmail,
+        schoolVerified,
+        profileImageUrl,
       });
       Alert.alert('회원정보 수정 완료', '회원정보가 수정되었습니다.', [{ text: '확인', onPress: () => router.back() }]);
     } catch (error) {

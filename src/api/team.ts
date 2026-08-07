@@ -179,7 +179,7 @@ export async function getRecommendedUsers(params: GetRecommendedUsersParams) {
       throw new ForbiddenAccessError(message);
     }
     if (response.status === 404) {
-      throw new Error(message); // RESOURCE_NOT_FOUND — 팀이 존재하지 않음
+      throw new Error(message);
     }
     if (response.status === 502 || response.status === 503) {
       throw new AiServerError(message);

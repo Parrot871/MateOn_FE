@@ -17,7 +17,8 @@ export default function LoginScreen() {
   const handleKakaoLogin = async () => {
     try {
       const { accessToken } = await kakaoLogin();
-      await loginWithKakao(accessToken);
+      const tokens = await loginWithKakao(accessToken);
+      console.log('[handleKakaoLogin] backend accessToken:', tokens.accessToken);
       const profile = await getKakaoProfile();
       router.replace({ pathname: '/myInfo', params: { provider: 'KAKAO', email: profile.email } });
     } catch (error) {
