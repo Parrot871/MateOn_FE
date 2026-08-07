@@ -1,10 +1,12 @@
 // app/userProfile.tsx
+import { createOrGetDmRoom } from '@/api/chat';
 import { getPublicUserProfile, UserNotFoundError, type PublicUserProfile } from '@/api/user';
 import { Back, ProfileUser } from '@/assets/images/tool';
+import { useAuthStore } from '@/store/authStore';
 import { Image } from 'expo-image';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 function Chip({ label }: { label: string }) {
@@ -34,8 +36,22 @@ export default function UserProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
+  // 로그인한 내 userId
+  const myUserId = useAuthStore((state) => state.myUserId);
+  const isAuthLoaded = useAuthStore((state) => state.isLoaded);
+  const loadMyUserId = useAuthStore((state) => state.loadMyUserId);
+
+  useEffect(() => {
+    loadMyUserId();
+  }, [loadMyUserId]);
+
+  // 스토어 로드가 끝난 뒤에만 "본인 여부"를 확정 (깜빡임 방지)
+  const isMyself =
+    isAuthLoaded && myUserId !== null && Number(userId) === Number(myUserId);
+
   const [profile, setProfile] = useState<PublicUserProfile | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [chatLoading, setChatLoading] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -71,6 +87,26 @@ export default function UserProfileScreen() {
   const metaLine = profile
     ? [profile.college, profile.major, profile.grade].filter(Boolean).join(' · ')
     : '';
+
+  const handleStartChat = async () => {
+    if (chatLoading || !profile) return;
+    setChatLoading(true);
+    try {
+      const { roomId } = await createOrGetDmRoom(Number(userId));
+      router.push({
+        pathname: '/chatDetail',
+        params: {
+          roomId: String(roomId),
+          title: profile.name,
+          partnerId: String(userId),
+        },
+      });
+    } catch (err) {
+      Alert.alert('오류', '채팅방을 여는 데 실패했어요. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setChatLoading(false);
+    }
+  };
 
   return (
     <View className="flex-1 bg-gray-50/60">
@@ -187,6 +223,29 @@ export default function UserProfileScreen() {
           </>
         )}
       </ScrollView>
+
+      {/* 하단 고정 1:1 대화하기 버튼 - 본인 프로필이면 렌더링 안 함 */}
+      {profile && !isMyself && (
+        <View
+          className="px-5 pt-3 border-t border-gray-100 bg-white"
+          style={{ paddingBottom: Math.max(insets.bottom, 16) }}
+        >
+          <TouchableOpacity
+            activeOpacity={0.8}
+            className="bg-indigo-600 rounded-xl py-4 items-center"
+            onPress={handleStartChat}
+            disabled={chatLoading}
+          >
+            {chatLoading ? (
+              <ActivityIndicator color="#ffffff" />
+            ) : (
+              <Text className="text-white font-pretendard-bold text-base">
+                1:1 대화하기
+              </Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }

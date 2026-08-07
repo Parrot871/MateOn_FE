@@ -32,9 +32,9 @@ import {
   type TeamDetail,
   type TeamOfferResponseDTO,
 } from '@/api/team';
+import { getPublicUserProfile, type PublicUserProfile } from '@/api/user';
 import { Back } from '@/assets/images/tool';
 import { useSchoolVerified } from '@/hooks/useSchoolVerified';
-import { getPublicUserProfile, type PublicUserProfile } from '@/api/user';
 import { getUnivByEmail } from '@/utils/univ';
 
 // 모집 마감일이 지났는지 여부. data.recruiting 플래그는 날짜와 무관하게 내려오므로 별도로 체크해야 함.
@@ -548,14 +548,26 @@ function TeamDetailContent({
               </Text>
             </View>
           </TouchableOpacity>
-
-          {additionalMembers > 0 && (
-            <View className="mt-2 bg-gray-50 rounded-xl p-3 items-center">
-              <Text className="text-gray-500 text-sm font-pretendard-medium">
-                외 팀원 {additionalMembers}명이 참여 중이에요
-              </Text>
-            </View>
-          )}
+          {data.members
+            .filter((m) => !m.isLeader)
+            .map((member) => (
+              <TouchableOpacity
+                key={member.userId}
+                activeOpacity={0.8}
+                onPress={() => router.push({ pathname: '/userProfile', params: { userId: member.userId } })}
+                className="flex-row items-center py-2"
+              >
+                <Avatar />
+                <View className="ml-3 flex-1">
+                  <Text className="text-gray-900 text-lg font-pretendard-bold">
+                    {member.name}
+                  </Text>
+                  <Text className="text-gray-400 text-sm mt-0.5">
+                    {member.major}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
         </View>
 
         {/* 보낸 제안 (팀장 전용) */}
