@@ -262,7 +262,7 @@ export default function EventRegisterScreen() {
             ) : (
               <View className="items-center">
                 <Text className="text-gray-400 font-pretendard-semibold">+ 포스터 이미지로 자동 채우기</Text>
-                <Text className="text-gray-300 text-xs font-pretendard mt-1">jpg/png/webp, 최대 1MB</Text>
+                <Text className="text-gray-300 text-xs font-pretendard mt-1">jpg/png/webp, 최대 10MB</Text>
               </View>
             )}
           </TouchableOpacity>
