@@ -288,6 +288,32 @@ function TeamDetailContent({
       ? `${leaderProfile.collaborationTemperature}°C`
       : '평가 부족';
 
+  // 팀원(팀장 제외) 프로필 사진: 상세 조회 응답에 photo가 안 내려오므로
+  // userId 기준으로 공개 프로필을 각각 조회해서 사진만 매핑해온다.
+  const [memberPhotos, setMemberPhotos] = useState<Record<number, string | null>>({});
+
+  useEffect(() => {
+    const nonLeaderMembers = data.members.filter((m) => !m.isLeader);
+    if (nonLeaderMembers.length === 0) return;
+
+    let isMounted = true;
+
+    Promise.all(
+      nonLeaderMembers.map((m) =>
+        getPublicUserProfile(m.userId)
+          .then((profile) => [m.userId, profile.profileImageUrl] as const)
+          .catch(() => [m.userId, null] as const),
+      ),
+    ).then((results) => {
+      if (!isMounted) return;
+      setMemberPhotos(Object.fromEntries(results));
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [data.members]);
+
   // 보낸 제안 목록 (팀장만)
   const [offers, setOffers] = useState<TeamOfferResponseDTO[] | null>(null);
   const [offersError, setOffersError] = useState<string | null>(null);
@@ -557,7 +583,7 @@ function TeamDetailContent({
                 onPress={() => router.push({ pathname: '/userProfile', params: { userId: member.userId } })}
                 className="flex-row items-center py-2"
               >
-                <Avatar />
+                <Avatar uri={memberPhotos[member.userId]} />
                 <View className="ml-3 flex-1">
                   <Text className="text-gray-900 text-lg font-pretendard-bold">
                     {member.name}

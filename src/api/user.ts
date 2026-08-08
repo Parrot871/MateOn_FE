@@ -17,6 +17,7 @@ export type UserProfile = {
   interestJobSecondary: string | null;
   interestJobTertiary: string | null;
   tagline: string | null;
+  portfolio: string | null;
   profileImageUrl: string | null;
   collaborationTemperature: number | null;
   collaborationReviewCount: number;
@@ -52,6 +53,7 @@ export type UpdateProfilePayload = {
   interestJobSecondary: string;
   interestJobTertiary: string;
   schoolEmail?: string;
+  portfolio?:string | null;
   tagline?: string | null;
 };
 
@@ -171,6 +173,7 @@ export type PublicUserProfile = {
   collaborationReviewCount: number;
   participatedActivities: ParticipatedActivity[];
   isMe: boolean;
+  portfolio: string | null;
   profileImageUrl: string | null;
 };
 
