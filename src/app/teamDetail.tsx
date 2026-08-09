@@ -32,9 +32,9 @@ import {
   type TeamDetail,
   type TeamOfferResponseDTO,
 } from '@/api/team';
+import { getPublicUserProfile, type PublicUserProfile } from '@/api/user';
 import { Back } from '@/assets/images/tool';
 import { useSchoolVerified } from '@/hooks/useSchoolVerified';
-import { getPublicUserProfile, type PublicUserProfile } from '@/api/user';
 import { getUnivByEmail } from '@/utils/univ';
 
 // 모집 마감일이 지났는지 여부. data.recruiting 플래그는 날짜와 무관하게 내려오므로 별도로 체크해야 함.
@@ -287,6 +287,32 @@ function TeamDetailContent({
     leaderProfile && leaderProfile.collaborationTemperature !== null
       ? `${leaderProfile.collaborationTemperature}°C`
       : '평가 부족';
+
+  // 팀원(팀장 제외) 프로필 사진: 상세 조회 응답에 photo가 안 내려오므로
+  // userId 기준으로 공개 프로필을 각각 조회해서 사진만 매핑해온다.
+  const [memberPhotos, setMemberPhotos] = useState<Record<number, string | null>>({});
+
+  useEffect(() => {
+    const nonLeaderMembers = data.members.filter((m) => !m.isLeader);
+    if (nonLeaderMembers.length === 0) return;
+
+    let isMounted = true;
+
+    Promise.all(
+      nonLeaderMembers.map((m) =>
+        getPublicUserProfile(m.userId)
+          .then((profile) => [m.userId, profile.profileImageUrl] as const)
+          .catch(() => [m.userId, null] as const),
+      ),
+    ).then((results) => {
+      if (!isMounted) return;
+      setMemberPhotos(Object.fromEntries(results));
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [data.members]);
 
   // 보낸 제안 목록 (팀장만)
   const [offers, setOffers] = useState<TeamOfferResponseDTO[] | null>(null);
@@ -548,14 +574,26 @@ function TeamDetailContent({
               </Text>
             </View>
           </TouchableOpacity>
-
-          {additionalMembers > 0 && (
-            <View className="mt-2 bg-gray-50 rounded-xl p-3 items-center">
-              <Text className="text-gray-500 text-sm font-pretendard-medium">
-                외 팀원 {additionalMembers}명이 참여 중이에요
-              </Text>
-            </View>
-          )}
+          {data.members
+            .filter((m) => !m.isLeader)
+            .map((member) => (
+              <TouchableOpacity
+                key={member.userId}
+                activeOpacity={0.8}
+                onPress={() => router.push({ pathname: '/userProfile', params: { userId: member.userId } })}
+                className="flex-row items-center py-2"
+              >
+                <Avatar uri={memberPhotos[member.userId]} />
+                <View className="ml-3 flex-1">
+                  <Text className="text-gray-900 text-lg font-pretendard-bold">
+                    {member.name}
+                  </Text>
+                  <Text className="text-gray-400 text-sm mt-0.5">
+                    {member.major}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
         </View>
 
         {/* 보낸 제안 (팀장 전용) */}

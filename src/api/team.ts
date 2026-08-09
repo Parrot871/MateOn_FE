@@ -20,6 +20,15 @@ export type TeamRecommendation = {
   label: string;
 };
 
+export type TeamMember = {
+  userId: number;
+  major: string;
+  name: string;
+  isLeader: boolean;
+}
+
+export type ApplicationStatus = "PENDING" | "ACCEPTED" | "REJECTED";
+
 export type TeamDetail = {
   id: number;
   title: string;
@@ -44,6 +53,8 @@ export type TeamDetail = {
   recruitmentEndDate: string;
   hasApplied: boolean;
   leader: boolean;
+  members: TeamMember[];
+  myApplicationStatus: ApplicationStatus | null;
 };
 
 type GetRecommendedTeamsParams = {
@@ -110,6 +121,8 @@ export type UserRecommendation = {
   collaborationTemperature: number | null; // 표본 부족 시 null (비공개, 결측 아님)
   score: number;
   label: string;
+  members: TeamMember[];
+
 };
  
 type GetRecommendedUsersParams = {

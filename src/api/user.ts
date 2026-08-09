@@ -17,6 +17,7 @@ export type UserProfile = {
   interestJobSecondary: string | null;
   interestJobTertiary: string | null;
   tagline: string | null;
+  portfolio: string | null;
   profileImageUrl: string | null;
   collaborationTemperature: number | null;
   collaborationReviewCount: number;
@@ -56,6 +57,7 @@ export type UpdateProfilePayload = {
   schoolVerified?: boolean;
   profileImageUrl?: string | null;
   tagline?: string | null;
+  portfolio?:string | null;
   // schoolEmail 변경 시, 실제로 인증코드를 검증했다는 증명으로 함께 보낸다 (verifyEmailCode 응답값).
   verificationToken?: string;
 };
@@ -178,6 +180,7 @@ export type PublicUserProfile = {
   collaborationReviewCount: number;
   participatedActivities: ParticipatedActivity[];
   isMe: boolean;
+  portfolio: string | null;
   profileImageUrl: string | null;
 };
 
