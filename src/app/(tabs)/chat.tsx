@@ -51,7 +51,12 @@ export default function ChatListScreen() {
       ) : (
         <FlatList
           data={rooms}
-          contentContainerStyle={{ paddingTop: 12, paddingBottom: 90 + insets.bottom }}
+          style={{ flex: 1}}
+          contentContainerStyle={
+            rooms.length === 0
+              ? { flexGrow: 1, justifyContent: 'center', paddingBottom: 90 + insets.bottom }
+              : { paddingTop: 12, paddingBottom: 90 + insets.bottom }
+          }
           ListHeaderComponent={
             rooms.length > 0 ? (
               <Text className="px-5 mb-3 text-[14px] font-pretendard-medium text-gray-400">
@@ -77,7 +82,7 @@ export default function ChatListScreen() {
             />
           )}
           ListEmptyComponent={
-            <Text className="text-center text-gray-400 mt-8">채팅방이 없어요</Text>
+            <Text className="text-center text-gray-400">채팅방이 없어요</Text>
           }
         />
       )}

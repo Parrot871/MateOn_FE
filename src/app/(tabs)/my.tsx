@@ -1,9 +1,10 @@
 import { getMyApplications, getReceivedOffers } from '@/api/apply';
 import { fetchBookmarkedEventIds } from '@/api/events';
 import { getMyNotifications } from '@/api/notification';
+import { summarizePortfolio } from '@/api/portfolio';
 import { getMyTeams, getTeamReviewTargets } from '@/api/team';
 import { clearTokens, getAccessToken } from '@/api/tokenStorage';
-import { deleteProfileImage, getMyProfile, uploadProfileImage, type UserProfile } from '@/api/user';
+import { deleteProfileImage, getMyProfile, updateProfile, uploadProfileImage, type UserProfile } from '@/api/user';
 import { HappyLine, NotificationLine } from '@/assets/icons';
 import { Back, Bookmark, FlagIcon, MypageMLogo, NotificationNewDot, ProfileUser, Star, UserIcon } from '@/assets/images/tool';
 import { useNotificationSSE } from '@/hooks/useNotificationSSE';
@@ -11,12 +12,15 @@ import { useAuthStore } from '@/store/authStore';
 import { useTeamRecStore } from '@/store/teamRecStore';
 import { parsePortfolioSummary } from '@/utils/portfolio';
 import { getUnivByEmail } from '@/utils/univ';
+import * as DocumentPicker from 'expo-document-picker';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+const MAX_PORTFOLIO_SIZE = 20 * 1024 * 1024;
 
 function TemperatureBar({ value, max }: { value: number; max: number }) {
   const progress = Math.min(value / max, 1) * 100;
@@ -63,6 +67,7 @@ export default function MypageScreen() {
   const [localImageUri, setLocalImageUri] = useState<string | null>(null);
   const [photoSheetVisible, setPhotoSheetVisible] = useState(false);
   const [hasUnread, setHasUnread] = useState(false);
+  const [isUploadingPortfolio, setIsUploadingPortfolio] = useState(false);
   const { notifications: sseNotifications } = useNotificationSSE();
   const [isExpanded, setIsExpanded] = useState(false);
   const { bulletPoints, summaryText } = parsePortfolioSummary(profile?.portfolio ?? null);
@@ -157,6 +162,43 @@ export default function MypageScreen() {
     }
   };
 
+    const handleUploadPortfolio = async () => {
+    if (isUploadingPortfolio || !profile) return;
+
+    const result = await DocumentPicker.getDocumentAsync({ type: 'application/pdf' });
+    if (result.canceled) return;
+
+    const file = result.assets[0];
+    if (file.size && file.size > MAX_PORTFOLIO_SIZE) {
+      Alert.alert('파일 용량 초과', 'PDF 파일은 최대 20MB까지 업로드할 수 있어요.');
+      return;
+    }
+
+     setIsUploadingPortfolio(true);
+    try {
+      // 1. POST — PDF 분석해서 요약 텍스트 받기
+      const { summary } = await summarizePortfolio({ uri: file.uri, name: file.name });
+
+      // 2. PUT — 받은 요약을 실제 프로필에 저장
+      const updated = await updateProfile({
+        name: profile.name,
+        college: profile.college ?? '',
+        major: profile.major ?? '',
+        interestJobPrimary: profile.interestJobPrimary ?? '',
+        interestJobSecondary: profile.interestJobSecondary ?? '',
+        interestJobTertiary: profile.interestJobTertiary ?? '',
+        portfolio: summary,
+      });
+
+      // 3. 화면 갱신
+      setProfile(updated);
+    } catch (error) {
+      Alert.alert('업로드 실패', error instanceof Error ? error.message : '잠시 후 다시 시도해주세요.');
+    } finally {
+      setIsUploadingPortfolio(false);
+    }
+  };
+
   const handlePressCamera = () => setPhotoSheetVisible(true);
 
   const ACTIVITIES = [
@@ -187,8 +229,6 @@ export default function MypageScreen() {
         ]),
     },
   ];
-
-  const temperature = 36.5;
 
   return (
     <>
@@ -256,10 +296,10 @@ export default function MypageScreen() {
                 <View className="mb-8 p-5 rounded-2xl border border-gray-200">
                   <Text className="text-black text-xl font-pretendard-bold mb-4">협업온도</Text>
                   <View className="flex-row items-center justify-between mb-4">
-                    <Text className="text-[#FF0000] text-3xl font-pretendard-bold">{temperature}°C</Text>
+                    <Text className="text-[#FF0000] text-3xl font-pretendard-bold">{profile?.collaborationTemperature ?? 0}°C</Text>
                     <Image source={HappyLine} style={{ width: 26, height: 26 }} contentFit="contain" />
                   </View>
-                  <TemperatureBar value={temperature} max={100} />
+                  <TemperatureBar value={profile?.collaborationTemperature ?? 0} max={100} />
                 </View>
 
         {/* AI 포트폴리오 분석 리포트 카드 */}
@@ -327,19 +367,30 @@ export default function MypageScreen() {
       ) : (
         /* 포트폴리오 미등록 시 CTA */
         <TouchableOpacity
-          onPress={() => router.push('/editprofile')}
+          onPress={handleUploadPortfolio}
+          disabled={isUploadingPortfolio}
           className="p-6 items-center justify-center active:bg-gray-50"
         >
-          <Text className="text-[#3E6AF4] font-pretendard-semibold text-base mb-1">
-            PDF 포트폴리오 업로드
-          </Text>
-          <Text className="text-gray-400 font-pretendard text-xs text-center">
-            AI가 핵심 경력과 역량을 요약해 한눈에 보여드려요
-          </Text>
+          {isUploadingPortfolio ? (
+            <>
+            <ActivityIndicator color="#3E6AF4" style={{marginBottom: 8 }} />
+            <Text className="text-[#3E6AF4] font-pretendard-semibold text-base">
+              AI가 포트폴리오를 분석하는 중...
+            </Text>
+            </>
+          ) : (
+          <>
+            <Text className="text-[#3E6AF4] font-pretendard-semibold text-base mb-1">
+              PDF 포트폴리오 업로드
+            </Text>
+            <Text className="text-gray-400 font-pretendard text-xs text-center">
+              AI가 핵심 경력과 역량을 요약해 한눈에 보여드려요
+            </Text>
+          </>
+          )}
         </TouchableOpacity>
       )}
     </View>
-
 
         <Text className="text-black text-xl font-pretendard-bold mb-3">내 활동</Text>
         <View className="flex-row flex-wrap gap-3 mb-8">
