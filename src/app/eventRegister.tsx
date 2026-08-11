@@ -6,6 +6,7 @@ import {
   type EventField,
 } from '@/api/events';
 import { X } from '@/assets/images/tool';
+import { useSchoolVerified } from '@/hooks/useSchoolVerified';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
@@ -112,6 +113,7 @@ export default function EventRegisterScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ category?: EventCategory }>();
+  const schoolVerified = useSchoolVerified();
 
   const [form, setForm] = useState<FormState>({
     ...EMPTY_FORM,
@@ -192,7 +194,7 @@ export default function EventRegisterScreen() {
 
     setIsSubmitting(true);
     try {
-      await createEvent({
+      const newEvent = await createEvent({
         category: form.category,
         field: form.field,
         title: form.title.trim(),
@@ -205,8 +207,18 @@ export default function EventRegisterScreen() {
         targetSchool: form.targetSchool.trim() || undefined,
       });
 
-      Alert.alert('등록 완료', '활동이 등록되었어요.', [
-        { text: '확인', onPress: () => router.replace('/activity') },
+      if (!schoolVerified) {
+        Alert.alert('등록 완료', '활동이 등록되었어요. 팀을 만들려면 학교 인증이 필요해요.', [
+          { text: '확인', onPress: () => router.replace('/schoolVerify') },
+        ]);
+        return;
+      }
+
+      Alert.alert('등록 완료', '등록한 활동으로 바로 팀을 만들어볼까요?', [
+        { text: '확인', onPress: () => router.replace({
+          pathname: '/teamRecruit',
+          params: { eventId: String(newEvent.id), eventTitle: newEvent.title },
+        }) },
       ]);
     } catch (error) {
       Alert.alert(
