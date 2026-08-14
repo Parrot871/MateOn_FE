@@ -115,7 +115,7 @@ export default function TeamMembersDetailScreen() {
   try {
     const room = await createOrGetDmRoom(userId);
     router.push({
-      pathname: '/chatDetail',
+      pathname: '/chat/[roomId]',
       params: { roomId: String(room.roomId), title: params.name, partnerId: String(userId) },
     });
   } catch (error) {
@@ -129,7 +129,7 @@ export default function TeamMembersDetailScreen() {
     if (Number.isNaN(teamId) || Number.isNaN(userId)) return;
 
     router.push({
-      pathname: '/teamProposal', 
+      pathname: '/team/[teamId]/proposal', 
       params: {
         teamId: String(teamId),
         userId: String(userId),

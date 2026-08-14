@@ -1,4 +1,3 @@
-
 // app/myApplicationEdit.tsx
 import { getApplicationDetail, updateApplication } from '@/api/apply';
 import { Back } from '@/assets/images/tool';
@@ -55,7 +54,7 @@ function FormField({
 }
 
 export default function MyApplicationEditScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { applicationId: applicationIdParam } = useLocalSearchParams<{ applicationId: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -70,9 +69,9 @@ export default function MyApplicationEditScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      const applicationId = Number(id);
+      const applicationId = Number(applicationIdParam);
 
-      if (!id || Number.isNaN(applicationId)) {
+      if (!applicationIdParam || Number.isNaN(applicationId)) {
         setErrorMessage('잘못된 접근입니다.');
         setLoading(false);
         return;
@@ -101,11 +100,11 @@ export default function MyApplicationEditScreen() {
       return () => {
         active = false;
       };
-    }, [id])
+    }, [applicationIdParam])
   );
 
   const handleSave = async () => {
-    const applicationId = Number(id);
+    const applicationId = Number(applicationIdParam);
 
     if (!message.trim()) {
       Alert.alert('알림', '지원 동기를 입력해주세요.');

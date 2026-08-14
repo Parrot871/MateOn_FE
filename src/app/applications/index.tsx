@@ -239,8 +239,11 @@ export default function MyApplicationsScreen() {
               <TouchableOpacity
                 key={application.applicationId}
                 activeOpacity={0.88}
-                onPress={() =>
-                  router.push({ pathname: '/myApplicationDetail', params: { id: application.applicationId } })
+                onPress={() => 
+                  router.push({
+                    pathname: '/applications/[applicationId]',
+                    params: {applicationId: String(application.applicationId)},
+                  })
                 }
                 className="bg-white border border-gray-100/80 rounded-3xl p-4 mb-3 shadow-sm"
                 style={{ elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8 }}

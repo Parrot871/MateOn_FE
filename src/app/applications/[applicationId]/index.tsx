@@ -12,7 +12,7 @@ import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, Linking, Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const STATUS_CONFIG: Record<
+const STATUS_CONFIG: Record <
   ApplicationStatus,
   { label: string; bg: string; text: string; dot: string }
 > = {
@@ -37,7 +37,7 @@ const STATUS_CONFIG: Record<
 };
 
 export default function MyApplicationDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { applicationId: applicationIdParam } = useLocalSearchParams<{ applicationId: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [application, setApplication] = useState<Application | null>(null);
@@ -47,9 +47,9 @@ export default function MyApplicationDetailScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      const applicationId = Number(id);
+      const applicationId = Number(applicationIdParam);
 
-      if (!id || Number.isNaN(applicationId)) {
+      if (!applicationIdParam || Number.isNaN(applicationId)) {
         setApplication(null);
         setErrorMessage('잘못된 접근입니다.');
         return;
@@ -70,13 +70,16 @@ export default function MyApplicationDetailScreen() {
       return () => {
         active = false;
       };
-    }, [id])
+    }, [applicationIdParam])
   );
 
   const handleEdit = () => {
     if (!application) return;
     setMenuVisible(false);
-    router.push({ pathname: '/myApplicationEdit', params: { id: application.applicationId } });
+    router.push({
+      pathname: '/applications/[applicationId]/edit',
+      params: { applicationId: String(application.applicationId) },
+    });
   };
 
   const handleCancel = () => {

@@ -202,15 +202,15 @@ export default function MypageScreen() {
   const handlePressCamera = () => setPhotoSheetVisible(true);
 
   const ACTIVITIES = [
-    { label: '지원 및 제안', count: applicationCount, icon: UserIcon, path: '/myApplications' },
-    { label: '모집한 팀', count: myTeamCount, icon: FlagIcon, path: '/myteamLeader' },
-    { label: '북마크', count: bookmarkCount, icon: Bookmark, path: '/myBookmarks' },
-    { label: '팀원 평가', count: reviewableTeamCount, icon: Star, path: '/teamReview' },
+    { label: '지원 및 제안', count: applicationCount, icon: UserIcon, path: '/applications' },
+    { label: '모집한 팀', count: myTeamCount, icon: FlagIcon, path: '/team/leader' },
+    { label: '북마크', count: bookmarkCount, icon: Bookmark, path: '/profile/bookmarks' },
+    { label: '팀원 평가', count: reviewableTeamCount, icon: Star, path: '/team/[teamId]/review' },
   ] as const;
 
   const SETTINGS = [
-    { label: '학교 인증', onPress: () => router.push('/schoolVerify') },
-    { label: '비밀번호 변경', onPress: () => router.push('/pwchange') },
+    { label: '학교 인증', onPress: () => router.push('/(auth)/schoolVerify') },
+    { label: '비밀번호 변경', onPress: () => router.push('/profile/pwchange') },
     {
       label: '로그아웃',
       onPress: () =>
@@ -288,7 +288,7 @@ export default function MypageScreen() {
         </View>
 
         <TouchableOpacity
-          onPress={() => router.push('/editprofile')}
+          onPress={() => router.push('/profile/edit')}
           className="h-12 mb-8 rounded-xl border border-[#3E6AF4] bg-white justify-center items-center"
         >
           <Text className="text-[#3E6AF4] text-lg font-pretendard-semibold">회원정보 수정</Text>

@@ -21,7 +21,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { TouchableOpacity as GestureTouchableOpacity } from 'react-native-gesture-handler';
 import Carousel from 'react-native-reanimated-carousel';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -139,7 +138,7 @@ export default function HomeScreen() {
             scrollAnimationDuration={600}
             style={{ width: BANNER_WIDTH }}
             renderItem={({ item }) => (
-              <GestureTouchableOpacity
+              <TouchableOpacity
                 activeOpacity={0.9}
                 onPress={() => router.push({ pathname: './activity' })}
                 style={{ width: '100%', height: '100%' }}
@@ -149,7 +148,7 @@ export default function HomeScreen() {
                   style={{ width: '100%', height: '100%', borderRadius: 16 }}
                   contentFit="cover"
                 />
-              </GestureTouchableOpacity>
+              </TouchableOpacity>
             )}
           />
         </View>
@@ -185,7 +184,7 @@ export default function HomeScreen() {
                   <View key={team.id} style={{ width: MY_TEAM_CARD_WIDTH }}>
                     <MyTeamCard
                       team={team}
-                      onPress={() => router.push({ pathname: '/teamDetail', params: { teamId: team.id } })}
+                      onPress={() => router.push({ pathname: '/team/[teamId]', params: { teamId: team.id } })}
                     />
                   </View>
                 ))}
@@ -274,7 +273,7 @@ export default function HomeScreen() {
                   <TeamRecommendationCard
                     team={team}
                     width={CARD_WIDTH}
-                    onPress={() => router.push({ pathname: '/teamDetail', params: { teamId: team.teamId } })}
+                    onPress={() => router.push({ pathname: '/team/[teamId]', params: { teamId: team.teamId } })}
                   />
                 </View>
               ))}

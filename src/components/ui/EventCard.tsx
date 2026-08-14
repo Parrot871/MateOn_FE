@@ -26,7 +26,7 @@ export function EventCard({ item, isBookmarked = false, onToggleBookmark }: Even
     <TouchableOpacity
       onPress={() => {
         setSelectedEvent(item);
-        router.push('/eventInfo');
+        router.push('/event/[eventId]');
       }}
       className="relative flex-row p-3 rounded-2xl border border-gray-200 gap-3"
     >

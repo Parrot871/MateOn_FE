@@ -216,7 +216,7 @@ export default function EventRegisterScreen() {
 
       Alert.alert('등록 완료', '등록한 활동으로 바로 팀을 만들어볼까요?', [
         { text: '확인', onPress: () => router.replace({
-          pathname: '/teamRecruit',
+          pathname: '/team/recruit',
           params: { eventId: String(newEvent.id), eventTitle: newEvent.title },
         }) },
       ]);

@@ -150,7 +150,7 @@ export default function EventInfoScreen() {
           <TouchableOpacity
             onPress={() =>
               router.push({
-                pathname: '/teamRecruit',
+                pathname: '/team/recruit',
                 params: { eventId: String(event.id), eventTitle: event.title },
               })
             }
@@ -160,7 +160,7 @@ export default function EventInfoScreen() {
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
-            onPress={() => router.push('/schoolVerify')}
+            onPress={() => router.push('/(auth)/schoolVerify')}
             className="mt-3 py-4 rounded-xl bg-gray-100 items-center"
           >
             <Text className="text-gray-400 font-pretendard-bold text-base">학교 인증하고 팀 만들기</Text>
@@ -199,7 +199,7 @@ export default function EventInfoScreen() {
             <TeamListCard
               key={team.teamId}
               team={team}
-              onPress={() => router.push({ pathname: '/teamDetail', params: { teamId: team.teamId } })}
+              onPress={() => router.push({ pathname: '/team/[teamId]', params: { teamId: team.teamId } })}
             />
           ))
         )}

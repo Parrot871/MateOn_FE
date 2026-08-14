@@ -170,7 +170,7 @@ export default function ActivityScreen() {
       <TouchableOpacity
         onPress={() =>
           router.push({
-            pathname: '/eventRegister',
+            pathname: '/event/register',
             params: { category: TOP_TAB_CATEGORY[topTab]}
           })
         }

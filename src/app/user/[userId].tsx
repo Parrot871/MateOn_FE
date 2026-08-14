@@ -1,3 +1,4 @@
+// app/user/[userId].tsx
 import { createOrGetDmRoom } from '@/api/chat';
 import { getPublicUserProfile, UserNotFoundError, type PublicUserProfile } from '@/api/user';
 import { Back, ProfileUser } from '@/assets/images/tool';
@@ -32,7 +33,7 @@ function ChipGroup({ title, items }: { title: string; items: string[] }) {
 }
 
 export default function UserProfileScreen() {
-  const { userId } = useLocalSearchParams<{ userId: string }>();
+  const { userId, fromChat } = useLocalSearchParams<{ userId: string; fromChat?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -95,7 +96,7 @@ export default function UserProfileScreen() {
     try {
       const { roomId } = await createOrGetDmRoom(Number(userId));
       router.push({
-        pathname: '/chatDetail',
+        pathname: '/chat/[roomId]',
         params: {
           roomId: String(roomId),
           title: profile.name,
@@ -301,8 +302,8 @@ export default function UserProfileScreen() {
         )}
       </ScrollView>
 
-      {/* 하단 고정 1:1 대화하기 버튼 */}
-      {profile && !isMyself && (
+      {/* 하단 고정 1:1 대화하기 버튼 — 채팅방에서 넘어온 경우(fromChat)는 숨김 */}
+      {profile && !isMyself && fromChat !== 'true' && (
         <View
           className="px-5 pt-3 border-t border-gray-100 bg-white"
           style={{ paddingBottom: Math.max(insets.bottom, 16) }}
