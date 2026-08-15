@@ -1,4 +1,6 @@
-// app/notification/index.tsx
+/**
+ * 알림창 화면
+ */
 import { getMyNotifications, type NotificationResponseDTO } from '@/api/notification';
 import { MessageFillBasic, UserAddFill } from '@/assets/icons';
 import { Star, X } from '@/assets/images/tool';
@@ -38,15 +40,14 @@ const NOTI_TABS = ['전체', '가입신청', '가입요청', '메세지', '평�
 type NotiTab = (typeof NOTI_TABS)[number];
 type NotiCategory = Exclude<NotiTab, '전체'>;
 
-// title 문자열로 탭 카테고리 분류 (백엔드 type만으론 4개 탭을 구분 못 해서 title 기준)
+// type 아래 세부 카테고리 필드가 존재하지 않아 현재는 title만으로 4개 탭을 구분해야 하므로 임시로 title 기준 매핑 사용
 function categorize(title: string): NotiCategory {
   if (title === '가입승인' || title === '가입거절') return '가입신청';
-  if (title === '팀 제안 도착' || title === '제안 거절' || title === '제안 수락') return '가입요청';
-  if (title === '팀원 평가 요청') return '평가';
-  return '메세지'; // "OOO님의 메시지" 패턴 등 나머지
+  if (title === '팀 제안 도착' || title === '제안 거절' || title === '제안 수락' || title === '지원서 도착') return '가입요청';
+  if (title === '팀원 평가 요청' || title === '활동 자동 종료') return '평가';
+  return '메세지';
 }
 
-// 카테고리별 아이콘 + 배경색 매핑
 // TODO: '가입요청' 전용 아이콘 생기면 UserAddFill → 교체
 const CATEGORY_ICON: Record<NotiCategory, { icon: any; bg: string }> = {
   '가입신청': { icon: UserAddFill, bg: '#FCE9E9' },
