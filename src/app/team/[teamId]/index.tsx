@@ -123,13 +123,13 @@ export default function TeamDetailScreen() {
         onPress: async () => {
           try {
             await deleteTeam(Number(teamId));
-            router.replace('/myteamLeader');
+            router.replace('/team/leader');
           } catch (err) {
             if (err instanceof ForbiddenAccessError) {
               Alert.alert('권한 없음', '이 팀의 팀장만 삭제할 수 있어요.');
             } else if (err instanceof ResourceNotFoundError) {
               Alert.alert('알림', '이미 삭제되었거나 존재하지 않는 팀이에요.');
-              router.replace('/myteamLeader');
+              router.replace('/team/leader');
             } else {
               Alert.alert('오류', '삭제에 실패했어요. 잠시 후 다시 시도해주세요.');
             }
@@ -174,7 +174,10 @@ export default function TeamDetailScreen() {
               <TouchableOpacity
                 onPress={() => {
                   setMenuVisible(false);
-                  router.push(`/teamEdit?teamId=${teamId}`);
+                  router.push({
+                    pathname: '/team/[teamId]/edit',
+                    params: {teamId}
+                  });
                 }}
                 activeOpacity={0.7}
                 className="px-4 py-3.5 border-b border-gray-50"
@@ -384,7 +387,7 @@ function TeamDetailContent({
     try {
       const draft = await getUserToTeamProposalDraft(Number(teamId));
       router.push({
-        pathname: '/teamApply',
+        pathname: '/team/apply',
         params: {
           teamId,
           introduction: draft.summary,
@@ -436,7 +439,7 @@ function TeamDetailContent({
 
         <TouchableOpacity
           activeOpacity={0.8}
-          onPress={() => router.push({ pathname: '/userProfile', params: { userId: data.leaderId } })}
+          onPress={() => router.push({ pathname: '/user/[userId]', params: { userId: String(data.leaderId) } })}
           className="flex-row items-center mb-6 bg-gray-50 p-3.5 rounded-2xl"
         >
           <Avatar uri={leaderProfile?.profileImageUrl} />
@@ -556,7 +559,7 @@ function TeamDetailContent({
 
           <TouchableOpacity
             activeOpacity={0.8}
-            onPress={() => router.push({ pathname: '/userProfile', params: { userId: data.leaderId } })}
+            onPress={() => router.push({ pathname: '/user/[userId]', params: { userId: data.leaderId } })}
             className="flex-row items-center py-2"
           >
             <Avatar uri={leaderProfile?.profileImageUrl} />
@@ -580,7 +583,7 @@ function TeamDetailContent({
               <TouchableOpacity
                 key={member.userId}
                 activeOpacity={0.8}
-                onPress={() => router.push({ pathname: '/userProfile', params: { userId: member.userId } })}
+                onPress={() => router.push({ pathname: '/user/[userId]', params: { userId: member.userId } })}
                 className="flex-row items-center py-2"
               >
                 <Avatar uri={memberPhotos[member.userId]} />
@@ -669,7 +672,7 @@ function TeamDetailContent({
             <TouchableOpacity
               activeOpacity={0.8}
               className="bg-indigo-600 rounded-xl py-4 items-center"
-              onPress={() => router.push(`/teamMembers?teamId=${teamId}`)}
+              onPress={() => router.push({ pathname: '/team/[teamId]/members', params: { teamId } })}
             >
               <Text className="text-white font-pretendard-bold text-base">
                 팀원 찾기 시작
@@ -719,7 +722,7 @@ function TeamDetailContent({
               className="bg-indigo-600 rounded-xl py-4 items-center"
               disabled={!isRecruitingOpen}
               style={{ opacity: isRecruitingOpen ? 1 : 0.4 }}
-              onPress={() => router.push(`/teamApply?teamId=${teamId}`)}
+              onPress={() => router.push({ pathname: '/team/apply', params: { teamId } })}
             >
               <Text className="text-white font-pretendard-bold text-base">
                 {isRecruitingOpen ? '지원하기' : '모집이 마감됐어요'}

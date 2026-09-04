@@ -115,7 +115,7 @@ export default function TeamMembersScreen() {
 
   function handlePressCandidate(item: UserRecommendation) {
   router.push({
-    pathname: '/teamMembersDetail',
+    pathname: '/team/[teamId]/members/[userId]',
     params: {
       teamId: String(teamId),
       userId: String(item.userId),

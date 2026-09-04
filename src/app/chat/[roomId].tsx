@@ -1,4 +1,4 @@
-// src/app/chatDetail.tsx (ChatRoomScreen)
+// app/chat/[roomId].tsx
 import { getPublicUserProfile } from '@/api/user';
 import { Back } from '@/assets/images/tool';
 import { ChatDateSeparator } from '@/components/ui/ChatDateSeparator';
@@ -146,8 +146,12 @@ export default function ChatRoomScreen() {
             <View className="bg-white rounded-2xl w-44 overflow-hidden shadow-lg" style={{ elevation: 4 }}>
               <TouchableOpacity
                 onPress={() => {
+                  if (!partnerId) return;
                   setMenuVisible(false);
-                  router.push({ pathname: '/userProfile', params: { userId: partnerId } });
+                  router.push({
+                    pathname: '/user/[userId]',
+                    params: { userId: partnerId, fromChat: 'true' },
+                  });
                 }}
                 activeOpacity={0.7}
                 className="px-4 py-3.5"

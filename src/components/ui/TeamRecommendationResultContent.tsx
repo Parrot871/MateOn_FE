@@ -59,7 +59,7 @@ export default function TeamRecommendationResultContent({ onClose }: Props) {
                 key={team.teamId}
                 team={team}
                 width={CARD_WIDTH}
-                onPress={() => router.push({ pathname: '/teamDetail', params: { teamId: team.teamId } })}
+                onPress={() => router.push({ pathname: '/team/[teamId]', params: { teamId: team.teamId } })}
               />
             ))}
           </View>

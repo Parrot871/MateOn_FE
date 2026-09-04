@@ -102,7 +102,7 @@ export default function MyTeamLeaderScreen() {
                 key={team.id}
                 onPress={() =>
                   router.push({
-                    pathname: "/teamDetail",
+                    pathname: "/team/[teamId]",
                     params: { teamId: team.id },
                   })
                 }
