@@ -306,6 +306,75 @@ export async function fetchEventDetail(id: number, signal?: AbortSignal): Promis
   return result.data;
 }
 
+export type SimilarityMapEventSummary = {
+  id: number;
+  title: string;
+  organizer: string;
+  category: EventCategory;
+  field: EventField | null;
+  fieldLabel: string | null;
+  detailUrl: string;
+};
+
+export type SimilarityMapPoint = SimilarityMapEventSummary & {
+  similarity: number;
+  rankPercentile: number;
+  radius: number;
+  x: number;
+  y: number;
+};
+
+export type SimilarityMapReferenceRing = {
+  percentile: number;
+  similarityAtPercentile: number;
+  radius: number;
+};
+
+export type SimilarityMap = {
+  query: SimilarityMapEventSummary;
+  points: SimilarityMapPoint[];
+  maxRadius: number;
+  minRadius: number;
+  radialJitter: number;
+  referenceRings: SimilarityMapReferenceRing[];
+  candidatePoolTotal: number;
+};
+
+export class EventEmbeddingNotReadyError extends Error {}
+
+export async function fetchSimilarityMap(
+  eventId: number,
+  topN?: number,
+  signal?: AbortSignal
+): Promise<SimilarityMap> {
+  const accessToken = await getAccessToken();
+
+  const query = new URLSearchParams();
+  if (topN !== undefined) query.set('topN', String(topN));
+  const queryString = query.toString();
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/events/${eventId}/similarity-map${queryString ? `?${queryString}` : ''}`,
+    {
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+      signal,
+    }
+  );
+
+  const text = await response.text();
+  const result: ApiResponse<SimilarityMap> | null = text ? JSON.parse(text) : null;
+
+  if (response.status === 400) {
+    throw new EventEmbeddingNotReadyError(result?.message || '유사도 분석이 아직 준비되지 않았어요.');
+  }
+
+  if (!response.ok || !result?.success) {
+    throw new Error(result?.message || `공모전 유사도 지도 조회 실패: ${response.status}`);
+  }
+
+  return result.data;
+}
+
 export async function extractEventImage(
   image: { uri: string; name: string; type: string },
   signal?: AbortSignal

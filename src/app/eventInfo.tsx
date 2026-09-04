@@ -1,7 +1,8 @@
-import { computeDDay } from '@/api/events';
+import { computeDDay, EventEmbeddingNotReadyError, fetchSimilarityMap, type SimilarityMap } from '@/api/events';
 import { getRecommendedTeams, MatchingIntentRequiredError, type TeamRecommendation } from '@/api/team';
 import { GroupFill } from '@/assets/icons';
 import { Alarm, Back, Bookmark, DateIcon, Point } from '@/assets/images/tool';
+import { SimilarEventsPanel } from '@/components/ui/SimilarEventsPanel';
 import { useBookmarkedEventIds } from '@/hooks/useBookmarkedEvents';
 import { useSchoolVerified } from '@/hooks/useSchoolVerified';
 import { useEventDetailStore } from '@/store/eventDetailStore';
@@ -41,6 +42,10 @@ export default function EventInfoScreen() {
   const [isLoadingTeams, setIsLoadingTeams] = useState(true);
   const [needsMatchingIntent, setNeedsMatchingIntent] = useState(false);
   const [imageAspectRatio, setImageAspectRatio] = useState(1);
+  const [similarityMap, setSimilarityMap] = useState<SimilarityMap | null>(null);
+  const [similarityStatus, setSimilarityStatus] = useState<'loading' | 'ready' | 'empty' | 'not-ready' | 'error'>(
+    'loading'
+  );
   const { bookmarkedIds, toggleBookmark } = useBookmarkedEventIds();
   const schoolVerified = useSchoolVerified();
 
@@ -62,6 +67,34 @@ export default function EventInfoScreen() {
     })
     .finally(() => setIsLoadingTeams(false));
 }, [event]);
+
+  useEffect(() => {
+    if (!event) return;
+
+    let cancelled = false;
+    setSimilarityStatus('loading');
+
+    fetchSimilarityMap(event.id, 20)
+      .then((map) => {
+        if (cancelled) return;
+        const points = map.points.filter((p) => Math.round(p.similarity * 100) < 100).slice(0, 10);
+        setSimilarityMap({ ...map, points });
+        setSimilarityStatus(points.length > 0 ? 'ready' : 'empty');
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        if (error instanceof EventEmbeddingNotReadyError) {
+          setSimilarityStatus('not-ready');
+        } else {
+          console.warn('[fetchSimilarityMap] 실패', error);
+          setSimilarityStatus('error');
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [event]);
 
   if (!event) {
     return (
@@ -119,6 +152,25 @@ export default function EventInfoScreen() {
             <Text className="text-gray-400 font-pretendard-medium">이미지가 없어요</Text>
           </View>
         )}
+
+        {similarityStatus === 'loading' ? (
+          <View className="mt-4 py-10 items-center rounded-2xl border border-gray-200">
+            <ActivityIndicator color="#4F46E5" />
+            <Text className="text-gray-400 font-pretendard-medium mt-3">비슷한 활동을 불러오는 중이에요</Text>
+          </View>
+        ) : similarityStatus === 'not-ready' ? (
+          <View className="mt-4 py-10 items-center bg-gray-50 rounded-2xl">
+            <Text className="text-gray-400 font-pretendard-medium text-center px-6">
+              유사도 분석을 준비하고 있어요.{'\n'}잠시 후 다시 확인해주세요.
+            </Text>
+          </View>
+        ) : similarityStatus === 'empty' ? (
+          <View className="mt-4 py-10 items-center bg-gray-50 rounded-2xl">
+            <Text className="text-gray-400 font-pretendard-medium">아직 비교할 만한 유사 활동이 없어요.</Text>
+          </View>
+        ) : similarityStatus === 'ready' && similarityMap ? (
+          <SimilarEventsPanel map={similarityMap} />
+        ) : null}
 
         <View className="flex-row items-center mt-4 px-4 py-4 rounded-2xl border border-gray-200">
           <View className="flex-1 flex-row items-center justify-center gap-4">
